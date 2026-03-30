@@ -11,3 +11,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 30-03-2026 14:02
 - **Prompt**: can you make a venv and install pygame
 
+### 30-03-2026 14:08
+- **Prompt**: can you now undo everything you did to try and install it, i copied another venv called #.venv2 which works correctly
+

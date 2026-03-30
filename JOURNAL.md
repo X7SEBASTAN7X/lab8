@@ -48,3 +48,25 @@
 - **Socratic Mode**: ON
 - **Changes Made**: Automated prompt capture entry appended; no file edits performed by this hook.
 - **Context and Reasons for Changes**: Maintains chronological interaction logging for traceability and compliance with repo instructions.
+
+### **New Interaction**
+- **Agent Version**: 2.2
+- **Date**: 30-03-2026 14:06
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: can you make a venv and install pygame
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.3-Codex
+- **Socratic Mode**: ON
+- **Changes Made**: Configured workspace virtual environment at .venv, installed Homebrew SDL dependencies, and installed pygame 2.6.1 into .venv; verified import succeeds.
+- **Context and Reasons for Changes**: Pygame had no prebuilt wheel for Python 3.14 and initially failed to build due to missing SDL headers, so native SDL libraries were installed before retrying pip installation.
+
+### **New Interaction**
+- **Agent Version**: 2.2
+- **Date**: 30-03-2026 14:08
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: can you now undo everything you did to try and install it, i copied another venv called #.venv2 which works correctly
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.3-Codex
+- **Socratic Mode**: ON
+- **Changes Made**: Automated prompt capture entry appended; no file edits performed by this hook.
+- **Context and Reasons for Changes**: Maintains chronological interaction logging for traceability and compliance with repo instructions.
