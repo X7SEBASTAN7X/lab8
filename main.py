@@ -10,8 +10,8 @@ WINDOW_HEIGHT = 500
 BACKGROUND_COLOR = (20, 24, 30)
 FPS = 60
 
-CUBE_COUNT = 40
-CUBE_MIN_SIZE = 20
+CUBE_COUNT = 10
+CUBE_MIN_SIZE = 10
 CUBE_MAX_SIZE = 50
 CUBE_MIN_SPEED = 50
 CUBE_MAX_SPEED = 300
@@ -67,19 +67,23 @@ def update_cube(cube: Cube, dt: float) -> None:
     if cube.x <= 0:
         cube.x = 0
         cube.vx *= -1
+        cube.vx *= random.randint(100,125)/100
         on_cube_bounce(cube, "left")
     elif cube.x + cube.size >= WINDOW_WIDTH:
         cube.x = WINDOW_WIDTH - cube.size
         cube.vx *= -1
+        cube.vx *= random.randint(100,125)/100
         on_cube_bounce(cube, "right")
 
     if cube.y <= 0:
         cube.y = 0
         cube.vy *= -1
         on_cube_bounce(cube, "top")
+        cube.vy *= random.randint(100,125)/100
     elif cube.y + cube.size >= WINDOW_HEIGHT:
         cube.y = WINDOW_HEIGHT - cube.size
         cube.vy *= -1
+        cube.vy *= random.randint(100,25)/100
         on_cube_bounce(cube, "bottom")
 
 
