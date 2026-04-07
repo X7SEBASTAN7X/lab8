@@ -118,7 +118,7 @@ so the better function could be this?
 
 ### **New Interaction**
 - **Agent Version**: 2.2
-- **Date**: $(date "+%d-%m-%Y %H:%M")
+- **Date**: 07-04-2026 11:20
 - **User**: sebastian.seingier@epita.fr
 - **Prompt**: how can i display fps on the HUD
 - **CoPilot Mode**: Agent
@@ -127,22 +127,12 @@ so the better function could be this?
 - **Changes Made**: No file edits. Provided guidance for showing FPS on the HUD using Pygame clock data.
 - **Context and Reasons for Changes**: User asked for implementation approach rather than requesting direct code modification.
 
-### **New Interaction**
-- **Agent Version**: 2.2
-- **Date**: 07-04-2026 11:20
-- **User**: sebastian.seingier@epita.fr
-- **Prompt**: how can i display fps on the HUD
-- **CoPilot Mode**: Agent
-- **CoPilot Model**: GPT-5.3-Codex
-- **Socratic Mode**: ON
-- **Changes Made**: No file edits. Provided guidance for showing FPS on the HUD using Pygame clock data.
-- **Context and Reasons for Changes**: Corrected prior entry timestamp expansion and logged this prompt accurately.
 
 ### **New Interaction**
 - **Agent Version**: 2.2
-- **Date**: 07-04-2026 11:21
+- **Date**: 07-04-2026 11:27
 - **User**: sebastian.seingier@epita.fr
-- **Prompt**: yes, add it
+- **Prompt**: I want to add so the smaller squares flee or change their trajectory from bigger squares. Do not five away the gull solution/algorithm, just help me learn how to do it progressively. Make sure to use function stubs and TODO
 - **CoPilot Mode**: Agent
 - **CoPilot Model**: GPT-5.3-Codex
 - **Socratic Mode**: ON
