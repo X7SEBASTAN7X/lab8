@@ -14,3 +14,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 30-03-2026 14:08
 - **Prompt**: can you now undo everything you did to try and install it, i copied another venv called #.venv2 which works correctly
 
+### 07-04-2026 09:51
+- **Prompt**: Can you tell me if the speed function makes sense to make it faster or slower depending on the size of the cube?
+
