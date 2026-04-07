@@ -20,3 +20,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 07-04-2026 10:02
 - **Prompt**: return maxi-(size-CUBE_MIN_SIZE/CUBE_MAX_SIZE-CUBE_MIN_SIZE)*(maxi-mini) so the better function could be this?
 
+### 07-04-2026 11:19
+- **Prompt**: how can i display fps on the HUD
+
