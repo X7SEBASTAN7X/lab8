@@ -53,7 +53,7 @@ def customize_spawn(cube: Cube) -> Cube:
 
 def speed(size, mini, maxi):
     speed = 10000*(1/size)
-    return speed if speed<=maxi else maxi
+    return maxi - ((size - CUBE_MIN_SIZE) / (CUBE_MAX_SIZE - CUBE_MIN_SIZE)) * (maxi - mini)
 
 def on_cube_bounce(cube: Cube, wall: str) -> None:
     """Stub hook: react to wall collisions (sound, score, effects, etc.)."""
@@ -67,23 +67,23 @@ def update_cube(cube: Cube, dt: float) -> None:
     if cube.x <= 0:
         cube.x = 0
         cube.vx *= -1
-        cube.vx *= random.randint(100,125)/100
+        cube.vx *= random.randint(95,105)/100
         on_cube_bounce(cube, "left")
     elif cube.x + cube.size >= WINDOW_WIDTH:
         cube.x = WINDOW_WIDTH - cube.size
         cube.vx *= -1
-        cube.vx *= random.randint(100,125)/100
+        cube.vx *= random.randint(95,105)/100
         on_cube_bounce(cube, "right")
 
     if cube.y <= 0:
         cube.y = 0
         cube.vy *= -1
         on_cube_bounce(cube, "top")
-        cube.vy *= random.randint(100,125)/100
+        cube.vy *= random.randint(95,105)/100
     elif cube.y + cube.size >= WINDOW_HEIGHT:
         cube.y = WINDOW_HEIGHT - cube.size
         cube.vy *= -1
-        cube.vy *= random.randint(100,25)/100
+        cube.vy *= random.randint(95,105)/100
         on_cube_bounce(cube, "bottom")
 
 
