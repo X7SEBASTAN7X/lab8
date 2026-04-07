@@ -115,3 +115,36 @@ so the better function could be this?
 - **Socratic Mode**: ON
 - **Changes Made**: Automated prompt capture entry appended; no file edits performed by this hook.
 - **Context and Reasons for Changes**: Maintains chronological interaction logging for traceability and compliance with repo instructions.
+
+### **New Interaction**
+- **Agent Version**: 2.2
+- **Date**: $(date "+%d-%m-%Y %H:%M")
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: how can i display fps on the HUD
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.3-Codex
+- **Socratic Mode**: ON
+- **Changes Made**: No file edits. Provided guidance for showing FPS on the HUD using Pygame clock data.
+- **Context and Reasons for Changes**: User asked for implementation approach rather than requesting direct code modification.
+
+### **New Interaction**
+- **Agent Version**: 2.2
+- **Date**: 07-04-2026 11:20
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: how can i display fps on the HUD
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.3-Codex
+- **Socratic Mode**: ON
+- **Changes Made**: No file edits. Provided guidance for showing FPS on the HUD using Pygame clock data.
+- **Context and Reasons for Changes**: Corrected prior entry timestamp expansion and logged this prompt accurately.
+
+### **New Interaction**
+- **Agent Version**: 2.2
+- **Date**: 07-04-2026 11:21
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: yes, add it
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.3-Codex
+- **Socratic Mode**: ON
+- **Changes Made**: Automated prompt capture entry appended; no file edits performed by this hook.
+- **Context and Reasons for Changes**: Maintains chronological interaction logging for traceability and compliance with repo instructions.

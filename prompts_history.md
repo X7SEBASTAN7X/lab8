@@ -23,3 +23,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 07-04-2026 11:19
 - **Prompt**: how can i display fps on the HUD
 
+### 07-04-2026 11:21
+- **Prompt**: yes, add it
+
