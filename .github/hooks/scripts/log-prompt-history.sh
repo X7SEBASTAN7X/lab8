@@ -2,8 +2,8 @@
 """
 Hook: log-prompt-history.sh
 Event: UserPromptSubmit
-Purpose: Append the user prompt to prompts_history.md and JOURNAL.md
-using the journal logger template.
+Purpose: Append the user prompt to prompts_history.md and JOURNAL.md,
+then commit the files to the local git repository.
 
 This file intentionally keeps the original .sh name for existing hook references,
 but it is implemented in Python for cross-platform compatibility.
@@ -19,8 +19,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Internal version (increment on each edit): X.YZ
-VERSION = "1.03"
-JOURNAL_AGENT_VERSION = "2.2"
+VERSION = "1.02"
 
 # Toggle local transcript copy (original filename is preserved).
 ENABLE_LOCAL_TRANSCRIPT_COPY = False
@@ -69,44 +68,8 @@ def get_user_identity(repo_root: Path) -> str:
   return "default_user"
 
 
-def normalize_prompt(prompt: str) -> str:
-  return prompt if prompt.strip() else "unknown"
-
-
-def sanitize_prompt_for_history(prompt: str) -> str:
+def sanitize_prompt(prompt: str) -> str:
   return " ".join(prompt.splitlines()).strip() or "unknown"
-
-
-def get_payload_string(payload: dict, keys: list[str], fallback: str = "unknown") -> str:
-  for key in keys:
-    value = payload.get(key)
-    if isinstance(value, str) and value.strip():
-      return value.strip()
-  return fallback
-
-
-def get_copilot_mode(payload: dict) -> str:
-  mode = get_payload_string(
-    payload,
-    ["copilot_mode", "mode", "chat_mode", "session_mode"],
-    fallback="Agent",
-  )
-  normalized = mode.lower()
-  allowed = {
-    "ask": "Ask",
-    "plan": "Plan",
-    "edit": "Edit",
-    "agent": "Agent",
-  }
-  return allowed.get(normalized, "Agent")
-
-
-def get_model_name(payload: dict) -> str:
-  return get_payload_string(
-    payload,
-    ["copilot_model", "model", "model_name", "runtime_model"],
-    fallback="GPT-5.3-Codex",
-  )
 
 
 def ensure_history_file(history_file: Path) -> None:
@@ -130,7 +93,7 @@ def ensure_journal_file(journal_file: Path) -> None:
     return
 
   journal_file.write_text(
-    "# This Journal gets updated automatically by the Journal Logger Agent\n\n",
+    "# This Journal gets updated automatically by the Journal Logger Agent\n",
     encoding="utf-8",
   )
 
@@ -186,18 +149,13 @@ def main() -> int:
     stdin_text = sys.stdin.read()
     payload = parse_payload(stdin_text)
 
-    prompt_raw = str(payload.get("prompt", "unknown"))
-    prompt = normalize_prompt(prompt_raw)
-    prompt_for_history = sanitize_prompt_for_history(prompt)
+    prompt = sanitize_prompt(str(payload.get("prompt", "unknown")))
     transcript_path_raw = str(payload.get("transcript_path", "")).strip()
     transcript_path = Path(transcript_path_raw) if transcript_path_raw else Path()
 
     timestamp_history = datetime.now().strftime("%d-%m-%Y %H:%M")
     timestamp_journal = datetime.now().strftime("%d-%m-%Y %H:%M")
     user_identity = get_user_identity(repo_root)
-    copilot_mode = get_copilot_mode(payload)
-    model_name = get_model_name(payload)
-    socratic_mode = "ON"
 
     maybe_copy_transcript(transcript_path, repo_root)
     ensure_history_file(history_file)
@@ -205,20 +163,15 @@ def main() -> int:
 
     history_entry = (
       f"### {timestamp_history}\n"
-      f"- **Prompt**: {prompt_for_history}\n\n"
+      f"- **Prompt**: {prompt}\n\n"
     )
 
     journal_entry = (
       "\n### **New Interaction**\n"
-      f"- **Agent Version**: {JOURNAL_AGENT_VERSION}\n"
+      f"- **Hook Version**: {VERSION}\n"
       f"- **Date**: {timestamp_journal}\n"
-      f"- **User**: {user_identity}\n"
+      # f"- **User**: {user_identity}\n"
       f"- **Prompt**: {prompt}\n"
-      f"- **CoPilot Mode**: {copilot_mode}\n"
-      f"- **CoPilot Model**: {model_name}\n"
-      f"- **Socratic Mode**: {socratic_mode}\n"
-      "- **Changes Made**: Automated prompt capture entry appended; no file edits performed by this hook.\n"
-      "- **Context and Reasons for Changes**: Maintains chronological interaction logging for traceability and compliance with repo instructions.\n"
     )
 
     append_entry(history_file, history_entry)

@@ -29,6 +29,7 @@ class Cube:
     vx: float
     vy: float
     color: Color
+    lifespan: int
 
 
 def random_color() -> Color:
@@ -46,7 +47,8 @@ def create_cube() -> Cube:
     y = random.uniform(0, WINDOW_HEIGHT - size)
     vx = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
     vy = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
-    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color())
+    lifespan = random.randint(30,180)
+    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan)
 
 
 def customize_spawn(cube: Cube) -> Cube:
