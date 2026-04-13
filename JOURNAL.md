@@ -154,3 +154,20 @@ so the better function could be this?
 - **Hook Version**: 1.02
 - **Date**: 13-04-2026 14:13
 - **Prompt**: #file:journal-logger.agent.md Reactivate the journal logger agent
+### **New Interaction**
+- **Agent Version**: 2.3
+- **Date**: 13-04-2026 14:14
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: #file:journal-logger.agent.md Reactivate the journal logger agent
+- **CoPilot Mode**: Edit
+- **CoPilot Model**: GPT-5.3-Codex
+- **Socratic Mode**: ON
+- **Changes Made**: Added missing agent name in frontmatter and expanded description trigger phrases to improve discoverability/activation.
+- **Context and Reasons for Changes**: The agent definition lacked a name field and had a narrow description; adding these makes activation more reliable when requested by the user.
+
+
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 13-04-2026 14:15
+- **Prompt**: Generate the code explorer site for this project

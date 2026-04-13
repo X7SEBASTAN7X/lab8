@@ -24,3 +24,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 13-04-2026 14:13
 - **Prompt**: #file:journal-logger.agent.md Reactivate the journal logger agent
 
+### 13-04-2026 14:15
+- **Prompt**: Generate the code explorer site for this project
+
