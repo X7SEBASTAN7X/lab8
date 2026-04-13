@@ -33,3 +33,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 13-04-2026 14:24
 - **Prompt**: Check and rebuild the website if/where broken
 
+### 13-04-2026 14:29
+- **Prompt**: im getting errors in the syntex error in text. mermaid version 11.14.0 Error rendering diagram. Error: Parse error on line 8: ...              m ->> loop: tick, handle e -----------------------^ Expecting '+', '-', '()', 'ACTOR', got 'loop'  Source:                  sequenceDiagram                     participant m as main                     participant loop as "Event Loop"                     participant upd as update_cube                     participant drw as draw_cube                     participant pygame_d as "Pygame Display"                                          m ->> loop: tick, handle events                     loop ->> upd: for each cube                     upd -->> loop: cube updated                     loop ->> drw: for each cube                     drw -->> loop: drawn                     loop ->> pygame_d: flip display
+
