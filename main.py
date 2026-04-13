@@ -111,8 +111,9 @@ def compute_flee_steering(cube: Cube, threats: list[Cube], steer_strength: float
             steer_y += (dy / dist) * weight
 
     total_dist = sqrt(steer_x**2 + steer_y**2)
+    if total_dist>0:
     # Normalize and multiply by the strength to make it look more or less intentional
-    return (steer_x / total_dist ) * steer_strength, (steer_y / total_dist) * steer_strength
+        return (steer_x / total_dist ) * steer_strength, (steer_y / total_dist) * steer_strength
     
     return 0.0, 0.0
 
