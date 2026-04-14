@@ -2,21 +2,26 @@ from __future__ import annotations
 from math import *
 import random
 from dataclasses import dataclass
+import time
 
 import pygame
 
-WINDOW_WIDTH = 1080
-WINDOW_HEIGHT = 800
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720
 BACKGROUND_COLOR = (20, 24, 30)
 FPS = 60
 
-CUBE_COUNT = 30
+CUBE_COUNT = 15
 CUBE_MIN_SIZE = 10
 CUBE_MAX_SIZE = 75
 CUBE_MIN_SPEED = 20
 CUBE_MAX_SPEED = 200
 FLEE_RADIUS = 140
 FLEE_STEER = 1200
+
+#Lifespan
+LIFESPAN_MIN = 20
+LIFESPAN_MAX = 60
 
 Color = tuple[int, int, int]
 
@@ -29,7 +34,9 @@ class Cube:
     vx: float
     vy: float
     color: Color
-    lifespan: int
+    lifespan: float
+    death: float
+
 
 
 def random_color() -> Color:
@@ -47,8 +54,9 @@ def create_cube() -> Cube:
     y = random.uniform(0, WINDOW_HEIGHT - size)
     vx = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
     vy = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
-    lifespan = random.randint(30,180)
-    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan)
+    lifespan = random.randint(LIFESPAN_MIN,LIFESPAN_MAX)
+    print(lifespan,time.time())
+    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan,death=time.time() + lifespan)
 
 
 def customize_spawn(cube: Cube) -> Cube:
@@ -140,6 +148,7 @@ def apply_steering(cube: Cube, steer_x: float, steer_y: float, dt: float) -> Non
 
 
 def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
+    #Make it flee
     threats = find_bigger_neighbors(cube, cubes, FLEE_RADIUS)
     steer_x, steer_y = compute_flee_steering(cube, threats, FLEE_STEER)
     apply_steering(cube, steer_x, steer_y, dt)
@@ -168,6 +177,12 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
         cube.vy *= -1
         cube.vy *= random.randint(95,105)/100
         on_cube_bounce(cube, "bottom")
+
+
+def check_kill(to_kill: Cube)-> Cube:
+    if time.time()>to_kill.death:
+        to_kill = create_cube()
+    return to_kill
 
 
 def draw_cube(surface: pygame.Surface, cube: Cube) -> None:
@@ -220,8 +235,9 @@ def main() -> None:
                 elif event.key == pygame.K_r:
                     cubes = [customize_spawn(create_cube()) for _ in range(CUBE_COUNT)]
 
-        for cube in cubes:
-            update_cube(cube, dt, cubes)
+        for i in range(len(cubes)):
+            update_cube(cubes[i], dt, cubes)
+            cubes[i]=check_kill(cubes[i])
 
         screen.fill(BACKGROUND_COLOR)
         for cube in cubes:
