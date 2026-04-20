@@ -39,3 +39,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 20-04-2026 10:33
 - **Prompt**: @file:code-explorer.agent.md read the #file:code_explorer.html  make a new version of code explorer with the date in the name
 
+### 20-04-2026 10:36
+- **Prompt**: 🔴 Dead Code & Inconsistency The in_radius() function duplicates distance logic but is never called. Also, velocity is randomly scaled (0.95–1.05) on bounce, causing subtle speed drift over time.  Basics: in_radius() calculates distance but isn't imported or called anywhere. The random bounce factor might be unintended. Engineering: Dead code accumulates technical debt. The random bounce factor is poorly documented—is it intentional for realism, or a bug? Unclear intent slows debugging. Architecture: Either remove in_radius() or refactor to use it (DRY principle). Document the random bounce with a comment explaining the game design rationale.  You say this, can you explain
+
