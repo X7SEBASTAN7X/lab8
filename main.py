@@ -16,6 +16,7 @@ CUBE_MIN_SIZE = 10
 CUBE_MAX_SIZE = 75
 CUBE_MIN_SPEED = 20
 CUBE_MAX_SPEED = 200
+
 FLEE_RADIUS = 140
 FLEE_STEER = 1200
 
@@ -55,29 +56,30 @@ def create_cube() -> Cube:
     vx = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
     vy = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
     lifespan = random.randint(LIFESPAN_MIN,LIFESPAN_MAX)
-    print(lifespan,time.time())
-    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan,death=time.time() + lifespan)
+    death = time.time() + lifespan
+    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan,death=death)
+
+def create_player() -> Cube:
+    size = random.randint(CUBE_MIN_SIZE, CUBE_MAX_SIZE)
+    x = random.uniform(0, WINDOW_WIDTH - size)
+    y = random.uniform(0, WINDOW_HEIGHT - size)
+    vx = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
+    vy = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
+    lifespan = 4096 
+    death = time.time() + lifespan
+    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan,death=death)
 
 
 def customize_spawn(cube: Cube) -> Cube:
     """Stub hook: customize newly created cubes here."""
     return cube
 
-def speed(size, mini, maxi) -> float:
+def speed(size: int, mini: int, maxi: int) -> float:
     return maxi - ((size - CUBE_MIN_SIZE) / (CUBE_MAX_SIZE - CUBE_MIN_SIZE)) * (maxi - mini)
 
 def on_cube_bounce(cube: Cube, wall: str) -> None:
     """Stub hook: react to wall collisions (sound, score, effects, etc.)."""
     _ = (cube, wall)
-
-def in_radius(cube, radius, neighbor)-> bool:
-    dx = cube.x+(cube.size/2)-neighbor.x+(neighbor.size/2)
-    dy = cube.y+(cube.size/2)-neighbor.y+(neighbor.size/2)
-    distance = sqrt(dx**2 +dy**2)
-    if distance <= radius:
-        return True
-    return False
-    
 
 def find_bigger_neighbors(cube: Cube, cubes: list[Cube], radius: float) -> list[Cube]:
     """Stub: return bigger cubes near the current cube."""
@@ -180,7 +182,10 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
 
 
 def check_kill(to_kill: Cube)-> Cube:
-    if time.time()>to_kill.death:
+    # If it has a to die its an int so true
+    # and if it has to be killed.
+    ct = time.time()
+    if to_kill.lifespan and ct>to_kill.death:
         to_kill = create_cube()
     return to_kill
 
@@ -215,6 +220,8 @@ def main() -> None:
     pygame.display.set_caption("Moving Cubes or Circles")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("couriernew", 20)
+    music = pygame.mixer.music.load("overworld_day.mp3")
+    pygame.mixer.music.play(-1)
 
     cubes = [customize_spawn(create_cube()) for _ in range(CUBE_COUNT)]
 

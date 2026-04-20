@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Explorer v2 — main.py</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --bg: #1e1e2e;
+  --surface: #2a2a3e;
+  --surface2: #313148;
+  --text: #cdd6f4;
+  --muted: #a6adc8;
+  --accent: #89b4fa;
+  --green: #a6e3a1;
+  --yellow: #f9e2af;
+  --red: #f38ba8;
+  --mono: 'Courier New', Courier, monospace;
+  --radius: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; }
+a { color: var(--accent); }
+a:hover { text-decoration: underline; }
+header { padding: 1.5rem 2rem; border-bottom: 1px solid #3a3a55; background: var(--surface); }
+header h1 { font-size: 1.4rem; color: var(--accent); letter-spacing: -0.3px; }
+header p { color: var(--muted); font-size: 0.88rem; margin-top: 0.2rem; }
+header .file-badge { display: inline-block; background: var(--surface2); border-radius: 4px; padding: 0.1rem 0.5rem; font-family: var(--mono); font-size: 0.8rem; color: var(--yellow); margin-top: 0.3rem; }
+.tab-nav { display: flex; padding: 0 2rem; background: var(--surface); border-bottom: 1px solid #3a3a55; flex-wrap: wrap; }
+.tab-btn { padding: 0.75rem 1.2rem; cursor: pointer; border: none; background: none; color: var(--muted); font-size: 0.88rem; border-bottom: 2px solid transparent; transition: all 0.18s; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-panel { display: none; padding: 2rem; max-width: 1280px; margin: 0 auto; }
+.tab-panel.active { display: block; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 800px) { .two-col, .review-layout { grid-template-columns: 1fr; } }
+.arch-subnav { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.arch-btn { padding: 0.35rem 0.85rem; border-radius: 20px; border: 1px solid #444; background: none; color: var(--muted); cursor: pointer; font-size: 0.82rem; transition: all 0.18s; }
+.arch-btn:hover { border-color: var(--accent); color: var(--text); }
+.arch-btn.active { background: var(--accent); color: #1e1e2e; border-color: var(--accent); font-weight: 600; }
+.arch-panel { display: none; }
+.arch-panel.active { display: block; }
+.diag-container { background: var(--surface2); border-radius: var(--radius); padding: 1.5rem; min-height: 280px; overflow-x: auto; display: flex; justify-content: center; align-items: flex-start; }
+.diag-container svg { max-width: 100%; height: auto; }
+.diag-title { color: var(--accent); font-size: 1.05rem; font-weight: 600; margin-bottom: 0.75rem; }
+.diag-caption { color: var(--muted); font-size: 0.82rem; margin-top: 0.75rem; font-style: italic; border-left: 2px solid #444; padding-left: 0.6rem; }
+.pattern-card { background: var(--surface2); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; border: 1px solid #3a3a55; }
+.pattern-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.pattern-icon { font-size: 1.1rem; }
+.pattern-title { font-weight: 600; color: var(--text); font-size: 0.95rem; }
+.pattern-desc { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
+.pattern-layers { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.6rem; }
+.layer { font-size: 0.8rem; padding: 0.28rem 0.6rem; border-radius: 4px; line-height: 1.4; }
+.layer-basics { background: #1e3a2a; color: #a6e3a1; }
+.layer-eng { background: #3a2e1a; color: #f9e2af; }
+.layer-arch { background: #1a2a3e; color: #89b4fa; }
+.layer-label { font-weight: 700; margin-right: 0.35rem; }
+.badge { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 12px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px; }
+.badge-high { background: #4a1a2a; color: var(--red); }
+.badge-medium { background: #3e2e10; color: var(--yellow); }
+.badge-low { background: #1a3220; color: var(--green); }
+.badge-score { background: var(--surface2); color: var(--accent); font-size: 1rem; font-weight: 700; padding: 0.3rem 0.8rem; border: 1px solid var(--accent); border-radius: var(--radius); }
+.type-banner { display: flex; align-items: center; gap: 1.2rem; padding: 1.1rem 1.5rem; background: var(--surface2); border-radius: var(--radius); margin-bottom: 1.5rem; border: 1px solid #3a3a55; }
+.score-big { font-size: 2.2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+.score-verdict { color: var(--muted); font-size: 0.88rem; }
+.review-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem; }
+.review-left, .review-right { background: var(--surface); border-radius: var(--radius); border: 1px solid #3a3a55; }
+.review-left { padding: 1.1rem; }
+.review-right { padding: 1.5rem; min-height: 320px; }
+.review-item { padding: 0.7rem 0.8rem; border-radius: 6px; cursor: pointer; margin-bottom: 0.5rem; border: 1px solid transparent; transition: all 0.15s; }
+.review-item:hover { border-color: #444; background: var(--surface2); }
+.review-item.selected { border-color: var(--accent); background: var(--surface2); }
+.ri-titlerow { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.ri-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.ri-note { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+pre.snippet { background: #12121e; border-radius: 5px; padding: 0.7rem; font-size: 0.76rem; overflow-x: auto; color: #cdd6f4; font-family: var(--mono); margin: 0.6rem 0; line-height: 1.5; border: 1px solid #2a2a3e; }
+.detail-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.9rem; }
+.detail-title { color: var(--accent); font-size: 1rem; font-weight: 700; }
+.detail-body { color: var(--muted); font-size: 0.86rem; line-height: 1.65; margin-bottom: 0.9rem; }
+.hint-box { background: var(--surface2); border-left: 3px solid var(--accent); padding: 0.6rem 0.8rem; border-radius: 0 4px 4px 0; font-size: 0.84rem; color: var(--text); }
+.perf-card { background: var(--surface2); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; border: 1px solid #3a3a55; }
+.perf-title { font-weight: 600; color: var(--text); margin-bottom: 0.4rem; }
+.perf-desc { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.5rem; }
+.ns-item { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.2rem; background: var(--surface2); border-radius: var(--radius); margin-bottom: 0.8rem; border: 1px solid #3a3a55; }
+.ns-num { font-size: 1.4rem; font-weight: 800; color: var(--accent); min-width: 2rem; line-height: 1.2; }
+.ns-text a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+.ns-text a:hover { text-decoration: underline; }
+.ns-desc { color: var(--muted); font-size: 0.83rem; margin-top: 0.2rem; }
+.fallback { background: #2a1215; color: var(--red); padding: 1rem; border-radius: 6px; font-size: 0.72rem; font-family: var(--mono); overflow-x: auto; white-space: pre-wrap; }
+.section-head { font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; }
+.section-head.green { color: var(--green); }
+.section-head.yellow { color: var(--yellow); }
+.section-head.red { color: var(--red); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Code Explorer</h1>
+  <span class="file-badge">main.py</span>
+  <p style="margin-top:0.4rem;">Pygame steering simulation v2 refreshed | Architecture analysis • patterns • type hints • code review • performance</p>
+</header>
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="architecture" onclick="switchTab('architecture', this)">Architecture</button>
+  <button class="tab-btn" data-tab="patterns" onclick="switchTab('patterns', this)">Patterns</button>
+  <button class="tab-btn" data-tab="typehints" onclick="switchTab('typehints', this)">Type Hints</button>
+  <button class="tab-btn" data-tab="codereview" onclick="switchTab('codereview', this)">Code Review</button>
+  <button class="tab-btn" data-tab="performance" onclick="switchTab('performance', this)">Performance</button>
+  <button class="tab-btn" data-tab="nextsteps" onclick="switchTab('nextsteps', this)">Next Steps</button>
+</nav>
+<section id="tab-architecture" class="tab-panel active">
+  <div class="arch-subnav">
+    <button class="arch-btn active" onclick="switchArch('callgraph', this)">Call Graph</button>
+    <button class="arch-btn" onclick="switchArch('dependencies', this)">Dependencies</button>
+    <button class="arch-btn" onclick="switchArch('sequencefull', this)">Full Sequence</button>
+    <button class="arch-btn" onclick="switchArch('sequence1', this)">Main Loop</button>
+    <button class="arch-btn" onclick="switchArch('sequence2', this)">Steering Flow</button>
+    <button class="arch-btn" onclick="switchArch('flowcubes', this)">Cube List</button>
+    <button class="arch-btn" onclick="switchArch('flowcube', this)">Cube State</button>
+    <button class="arch-btn" onclick="switchArch('flowdt', this)">Frame Delta</button>
+    <button class="arch-btn" onclick="switchArch('flowfps', this)">FPS Display</button>
+    <button class="arch-btn" onclick="switchArch('lifecycle', this)">Cube Lifecycle</button>
+  </div>
+  <div id="arch-callgraph" class="arch-panel active">
+    <div class="diag-title">Call Graph</div>
+    <div class="diag-container" id="diag-callgraph"></div>
+    <div class="diag-caption">The main loop creates cubes, updates each one, checks respawns, and then renders the frame.</div>
+  </div>
+  <div id="arch-dependencies" class="arch-panel">
+    <div class="diag-title">Module Dependencies</div>
+    <div class="diag-container" id="diag-dependencies"></div>
+    <div class="diag-caption">The file depends on pygame for graphics, math for vector math, random for variation, dataclasses for the Cube model, and time for lifespan tracking.</div>
+  </div>
+  <div id="arch-sequencefull" class="arch-panel">
+    <div class="diag-title">Full Runtime Sequence</div>
+    <div class="diag-container" id="diag-sequencefull"></div>
+    <div class="diag-caption">This end-to-end timeline shows frame tick, event handling, cube updates, lifespan checks, and final frame presentation.</div>
+  </div>
+  <div id="arch-sequence1" class="arch-panel">
+    <div class="diag-title">Main Update Loop</div>
+    <div class="diag-container" id="diag-sequence1"></div>
+    <div class="diag-caption">Each frame gets a delta time, processes events, steps all cubes, clears the screen, draws, and presents the frame.</div>
+  </div>
+  <div id="arch-sequence2" class="arch-panel">
+    <div class="diag-title">Steering Flow</div>
+    <div class="diag-container" id="diag-sequence2"></div>
+    <div class="diag-caption">A cube checks larger neighbors, computes a flee vector, applies that steering, and then moves.</div>
+  </div>
+  <div id="arch-flowcubes" class="arch-panel">
+    <div class="diag-title">Data Flow: Cube List</div>
+    <div class="diag-container" id="diag-flowcubes"></div>
+    <div class="diag-caption">The cubes list is created at startup, mutated during updates, and replaced when the reset key or lifespan logic respawns cubes.</div>
+  </div>
+  <div id="arch-flowcube" class="arch-panel">
+    <div class="diag-title">Data Flow: Cube State</div>
+    <div class="diag-container" id="diag-flowcube"></div>
+    <div class="diag-caption">Each cube carries position, velocity, size, color, and lifespan through steering, movement, collision, and drawing.</div>
+  </div>
+  <div id="arch-flowdt" class="arch-panel">
+    <div class="diag-title">Data Flow: Frame Delta</div>
+    <div class="diag-container" id="diag-flowdt"></div>
+    <div class="diag-caption">The frame delta from clock.tick(FPS) controls how far cubes move and how much steering is applied each update.</div>
+  </div>
+  <div id="arch-flowfps" class="arch-panel">
+    <div class="diag-title">Data Flow: FPS Display</div>
+    <div class="diag-container" id="diag-flowfps"></div>
+    <div class="diag-caption">The raw frame rate is smoothed before being rendered in the HUD, so the display stays readable and stable.</div>
+  </div>
+  <div id="arch-lifecycle" class="arch-panel">
+    <div class="diag-title">Control Flow: Cube Lifecycle</div>
+    <div class="diag-container" id="diag-lifecycle"></div>
+    <div class="diag-caption">A cube is spawned, updated each frame, checked for lifespan expiry, then either kept or replaced by a new spawn.</div>
+  </div>
+</section>
+<section id="tab-patterns" class="tab-panel">
+  <h2 class="section-head green">3 Good Patterns</h2>
+  <div class="two-col">
+    <div>
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">✅</span><div class="pattern-title">Typed Cube Data</div></div>
+        <div class="pattern-desc">The Cube dataclass gives the simulation a clear shape for its state and keeps the code easy to reason about.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span> Fields like <code>x</code>, <code>y</code>, and <code>vx</code> are declared once, so the object structure is obvious.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering:</span> Type hints reduce mistakes when the cube flows through update, collision, and draw functions.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture:</span> The dataclass acts like a contract for the rest of the simulation.</div>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">✅</span><div class="pattern-title">Separation of Concerns</div></div>
+        <div class="pattern-desc">Neighbor search, steering computation, physics updates, and rendering each live in their own function.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span> Each helper does one job instead of mixing logic together.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering:</span> The functions are testable in isolation, which makes debugging much easier.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture:</span> <code>update_cube()</code> becomes a readable pipeline from threats to motion to collision.</div>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">✅</span><div class="pattern-title">Top Level Tuning</div></div>
+        <div class="pattern-desc">Behavior knobs like <code>FLEE_RADIUS</code>, <code>FLEE_STEER</code>, and <code>CUBE_COUNT</code> are centralized near the top of the file.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span> The important numbers are easy to find and change.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering:</span> You can tune behavior without editing the core logic.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture:</span> The file has a clean split between configuration and runtime behavior.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h2 class="section-head red">2 Potential Issues</h2>
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">⚠️</span><div class="pattern-title">Quadratic Neighbor Search</div></div>
+        <div class="pattern-desc">Every cube scans the full cube list, so the cost grows quickly as more objects are added.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span> The nested loop checks every neighbor against every cube.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering:</span> The current approach is fine at 15 cubes, but it scales poorly.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture:</span> A grid or quadtree would be the next step if the simulation grows.</div>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">⚠️</span><div class="pattern-title">Unused Player Factory</div></div>
+        <div class="pattern-desc">The file defines <code>create_player()</code>, but runtime flow uses only <code>create_cube()</code>, so the player factory currently behaves like dead code.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span> The function exists, but no caller uses it in <code>main()</code>.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering:</span> Unused paths increase maintenance cost and confuse future refactors.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture:</span> Keep separate factories only if they map to a real game role with clear ownership.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="tab-typehints" class="tab-panel">
+  <div class="type-banner">
+    <div class="score-big">4 / 5</div>
+    <div class="score-verdict">Strong typing overall. The remaining gaps are mostly consistency and readability around imports and scalar field intent.</div>
+  </div>
+  <div class="two-col">
+    <div>
+      <h3 class="section-head green">Strengths</h3>
+      <div class="pattern-card">
+        <div class="pattern-title">Return types are clear</div>
+        <div class="pattern-desc"><code>find_bigger_neighbors()</code>, <code>compute_flee_steering()</code>, and <code>update_cube()</code> all declare what they return.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-title">Concrete container types</div>
+        <div class="pattern-desc"><code>list[Cube]</code> and <code>tuple[float, float]</code> tell readers exactly what data is moving through the code.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-title">Typed helper parameters</div>
+        <div class="pattern-desc"><code>speed(size: int, mini: int, maxi: int)</code> now has explicit parameter types, improving call-site safety.</div>
+      </div>
+    </div>
+    <div>
+      <h3 class="section-head red">Gaps</h3>
+      <div class="pattern-card">
+        <div class="pattern-title">Import style reduces clarity</div>
+        <div class="pattern-desc"><code>from math import *</code> makes symbol origins implicit. Explicit imports are easier to read and analyze.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-title">Lifespan intent can be tighter</div>
+        <div class="pattern-desc"><code>lifespan</code> is annotated as float but generated from integer ranges. Clarifying expected units and type would help maintainability.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="tab-codereview" class="tab-panel">
+  <div class="review-layout">
+    <div class="review-left">
+      <h3 class="section-head" style="margin-top: 0;">Issues and Recommendations</h3>
+      <div id="review-items"></div>
+    </div>
+    <div class="review-right" id="review-detail-panel"></div>
+  </div>
+</section>
+<section id="tab-performance" class="tab-panel">
+  <h2 class="section-head yellow">Performance Analysis</h2>
+  <div class="two-col">
+    <div>
+      <h3 class="section-head green">Performance Wins</h3>
+      <div class="perf-card">
+        <div class="perf-title">Direct drawing</div>
+        <div class="perf-desc"><code>draw_cube()</code> uses <code>pygame.draw.circle()</code> directly, which keeps rendering simple and cheap.</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-title">Small fixed workload</div>
+        <div class="perf-desc">With only 15 cubes, the current frame budget is comfortable on a normal laptop.</div>
+      </div>
+    </div>
+    <div>
+      <h3 class="section-head red">Performance Risks</h3>
+      <div class="perf-card">
+        <div class="perf-title">Quadratic neighbor checks</div>
+        <div class="perf-desc"><code>find_bigger_neighbors()</code> compares each cube against the whole list every frame.</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-title">Repeated square roots</div>
+        <div class="perf-desc">Distance math is recomputed in the search and steering stages instead of being cached or simplified.</div>
+      </div>
+    </div>
+  </div>
+  <div class="badge-score">4 / 6 - Fine for a small demo, but a spatial grid would be the next scaling step.</div>
+</section>
+<section id="tab-nextsteps" class="tab-panel">
+  <h2 class="section-head">Resources and Next Steps</h2>
+  <div class="ns-item">
+    <div class="ns-num">1</div>
+    <div class="ns-text">
+      <a href="https://www.pygame.org/docs/" target="_blank">Pygame documentation</a>
+      <div class="ns-desc">Best place to extend the event loop, rendering, and audio handling.</div>
+    </div>
+  </div>
+  <div class="ns-item">
+    <div class="ns-num">2</div>
+    <div class="ns-text">
+      <a href="https://docs.python.org/3/library/typing.html" target="_blank">Python typing docs</a>
+      <div class="ns-desc">Useful for tightening helper signatures and keeping the Cube model consistent.</div>
+    </div>
+  </div>
+  <div class="ns-item">
+    <div class="ns-num">3</div>
+    <div class="ns-text">
+      <a href="https://refactoring.guru/refactoring/techniques/extract-method" target="_blank">Extract method</a>
+      <div class="ns-desc">Good follow-up refactor for separating distance math and bounce behavior.</div>
+    </div>
+  </div>
+  <div class="ns-item">
+    <div class="ns-num">4</div>
+    <div class="ns-text">
+      <a href="https://en.wikipedia.org/wiki/Quadtree" target="_blank">Quadtree overview</a>
+      <div class="ns-desc">A practical next step if the cube count grows and neighbor search becomes a bottleneck.</div>
+    </div>
+  </div>
+</section>
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+function switchArch(name, btn) {
+  document.querySelectorAll('.arch-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.arch-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('arch-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+const reviewItems = [
+  {
+    id: 'r1',
+    title: 'Unused create_player path',
+    severity: 'medium',
+    snippet: 'def create_player() -> Cube:\n    ...\n\n# main uses only create_cube() for list initialization and reset',
+    shortNote: 'A player factory exists, but no runtime path calls it.',
+    fullExplanation: 'The file provides a dedicated create_player() function with long lifespan behavior, but current game flow never invokes it. This can confuse readers into expecting a player entity that does not actually exist in the simulation.',
+    improvementHint: 'Either wire create_player() into the game loop as a first-class entity or remove it until the feature is implemented.'
+  },
+  {
+    id: 'r2',
+    title: 'Neighbor search scales poorly',
+    severity: 'high',
+    snippet: 'for neighbor in cubes:\n    if neighbor is cube:\n        continue\n    if neighbor.size > cube.size:\n        dist = sqrt((cx - nx)**2 + (cy - ny)**2)',
+    shortNote: 'Every cube scans every other cube on every frame.',
+    fullExplanation: 'The nested loop makes the steering system quadratic in the cube count. That is acceptable at 15 cubes, but it becomes the main limiter if the demo is expanded. The repeated square root also adds cost inside the inner loop.',
+    improvementHint: 'Switch to squared-distance checks first, then add a grid or quadtree if the simulation needs to scale.'
+  },
+  {
+    id: 'r3',
+    title: 'Bounce drift is undocumented',
+    severity: 'medium',
+    snippet: 'cube.vx *= -1\ncube.vx *= random.randint(95,105)/100',
+    shortNote: 'Velocity changes slightly every bounce, which may or may not be intentional.',
+    fullExplanation: 'The bounce logic introduces a random multiplier after reflection. That can be a nice effect, but it should be called out explicitly because it changes the simulation over time. Without that context, the motion can feel unstable or buggy.',
+    improvementHint: 'Either document the effect as a design choice or move it behind a named constant such as BOUNCE_DAMPING.'
+  },
+  {
+    id: 'r4',
+    title: 'Wildcard math import',
+    severity: 'low',
+    snippet: 'from math import *',
+    shortNote: 'Namespace-wide imports make it harder to trace symbol origin.',
+    fullExplanation: 'Wildcard imports work, but they reduce readability and can mask naming collisions in larger files. Static analysis and newcomers generally benefit from explicit imports.',
+    improvementHint: 'Replace wildcard import with explicit names, e.g. from math import sqrt.'
+  },
+  {
+    id: 'r5',
+    title: 'Respawn path drops customization hook',
+    severity: 'medium',
+    snippet: 'if to_kill.lifespan and time.time() > to_kill.death:\n    to_kill = create_cube()',
+    shortNote: 'Respawns skip customize_spawn(), unlike startup and reset flows.',
+    fullExplanation: 'Initial spawn and reset both pass cubes through customize_spawn(), but check_kill() currently respawns with create_cube() directly. Any customization logic will therefore be inconsistent between initial and replacement cubes.',
+    improvementHint: 'Use customize_spawn(create_cube()) in check_kill() to keep spawn behavior consistent across all entry points.'
+  }
+];
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function selectReview(id) {
+  document.querySelectorAll('.review-item').forEach(el => el.classList.remove('selected'));
+  const selected = document.getElementById('ri-' + id);
+  if (selected) selected.classList.add('selected');
+  const item = reviewItems[id];
+  if (!item) return;
+  const sevClass = 'badge-' + item.severity;
+  const body = item.fullExplanation.replace(/\n/g, '<br>');
+  document.getElementById('review-detail-panel').innerHTML = `
+    <div>
+      <div class="detail-head">
+        <span class="detail-title">${escH(item.title)}</span>
+        <span class="badge ${escH(sevClass)}">${escH(item.severity)}</span>
+      </div>
+      <div class="detail-body">${body}</div>
+      <pre class="snippet">${escH(item.snippet)}</pre>
+      <div class="hint-box"><strong>Improvement:</strong> ${escH(item.improvementHint)}</div>
+    </div>`;
+}
+mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+const diagrams = {
+  callgraph: String.raw`
+graph TD
+  n1["main loop"]
+  n2["event handling"]
+  n3["update cubes"]
+  n4["respawn check"]
+  n5["draw cubes"]
+  n6["hud draw"]
+  n7["flee search"]
+  n8["steer calc"]
+  n9["apply steer"]
+  n10["bounce hook"]
+  n11["cube spawn"]
+  n12["player spawn"]
+  n1 --> n2
+  n1 --> n3
+  n3 --> n7
+  n3 --> n8
+  n3 --> n9
+  n3 --> n4
+  n3 --> n10
+  n4 --> n11
+  n12 --> n5
+  n1 --> n5
+  n1 --> n6
+`,
+  dependencies: String.raw`
+graph LR
+  n1["main.py"]
+  n2["pygame"]
+  n3["math"]
+  n4["random"]
+  n5["dataclasses"]
+  n6["time"]
+  n7["future"]
+  n1 --> n2
+  n1 --> n3
+  n1 --> n4
+  n1 --> n5
+  n1 --> n6
+  n1 --> n7
+  click n2 href "https://www.pygame.org/docs/" "Open docs"
+  click n3 href "https://docs.python.org/3/library/math.html" "Open docs"
+  click n4 href "https://docs.python.org/3/library/random.html" "Open docs"
+  click n5 href "https://docs.python.org/3/library/dataclasses.html" "Open docs"
+  click n6 href "https://docs.python.org/3/library/time.html" "Open docs"
+  click n7 href "https://docs.python.org/3/library/__future__.html" "Open docs"
+`,
+  sequencefull: String.raw`
+sequenceDiagram
+  participant p1 as main
+  participant p2 as "event loop"
+  participant p3 as cubes
+  participant p4 as update
+  participant p5 as respawn
+  participant p6 as draw
+  participant p7 as "display flip"
+  p1->>p2: start frame
+  p2->>p3: iterate cubes
+  p3->>p4: update cube
+  p4-->>p3: motion done
+  p3->>p5: check lifespan
+  p5-->>p3: keep or replace
+  p2->>p6: draw all
+  p6->>p7: present frame
+`,
+  sequence1: String.raw`
+sequenceDiagram
+  participant p1 as main
+  participant p2 as "event loop"
+  participant p3 as cubes
+  participant p4 as screen
+  participant p5 as hud
+  p1->>p2: start frame
+  p2->>p3: update each cube
+  p3-->>p2: cube updated
+  p2->>p4: clear screen
+  p2->>p4: draw cubes
+  p2->>p5: draw hud
+  p2->>p4: flip screen
+`,
+  sequence2: String.raw`
+sequenceDiagram
+  participant p1 as cube
+  participant p2 as search
+  participant p3 as steer
+  participant p4 as motion
+  p1->>p2: find bigger cubes
+  p2-->>p1: threat list
+  p1->>p3: compute flee
+  p3-->>p1: steer vector
+  p1->>p4: apply force
+  p4-->>p1: moved cube
+`,
+  flowcubes: String.raw`
+graph TD
+  n1["cube list"]
+  n2["spawn batch"]
+  n3["frame update"]
+  n4["respawn replace"]
+  n5["render batch"]
+  n1 --> n3
+  n2 --> n1
+  n3 --> n4
+  n4 --> n1
+  n1 --> n5
+`,
+  flowcube: String.raw`
+graph TD
+  n1["cube state"]
+  n2["neighbor scan"]
+  n3["flee steer"]
+  n4["velocity update"]
+  n5["position step"]
+  n6["bounce adjust"]
+  n7["draw circle"]
+  n1 --> n2
+  n2 --> n3
+  n3 --> n4
+  n4 --> n5
+  n5 --> n6
+  n6 --> n7
+`,
+  flowdt: String.raw`
+graph TD
+  n1["frame delta"]
+  n2["move step"]
+  n3["steer scale"]
+  n4["cube motion"]
+  n1 --> n2
+  n1 --> n3
+  n2 --> n4
+  n3 --> n4
+`,
+  lifecycle: String.raw`
+graph TD
+  n1["spawn cube"]
+  n2["update cube"]
+  n3["draw cube"]
+  n4["check death"]
+  n5["respawn cube"]
+  n6["keep cube"]
+  n1 --> n2
+  n2 --> n4
+  n4 --> n5
+  n4 --> n6
+  n5 --> n3
+  n6 --> n3
+`,
+  flowfps: String.raw`
+graph TD
+  n1["raw fps"]
+  n2["smooth fps"]
+  n3["hud text"]
+  n4["screen blit"]
+  n1 --> n2
+  n2 --> n3
+  n3 --> n4
+`
+};
+let renderCounter = 0;
+async function renderDiagram(key, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const source = diagrams[key];
+  if (!source) { container.innerHTML = '<p style="color:var(--muted)">No diagram source found.</p>'; return; }
+  const uid = 'mmd-' + key + '-' + (++renderCounter);
+  try {
+    const { svg, bindFunctions } = await mermaid.render(uid, source);
+    container.innerHTML = svg;
+    if (typeof bindFunctions === 'function') bindFunctions(container);
+  } catch (err) {
+    container.innerHTML = '<pre class="fallback">Render failed: ' + err.message + '\n\nSource:\n' + source + '</pre>';
+  }
+}
+async function renderAll() {
+  for (const [key] of Object.entries(diagrams)) {
+    await renderDiagram(key, 'diag-' + key);
+  }
+}
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('review-detail-panel').innerHTML = '<div class="detail-title">Details</div><div class="detail-body">Select an item on the left to inspect the code review note.</div>';
+  const container = document.getElementById('review-items');
+  container.innerHTML = reviewItems.map((item, idx) => `
+    <div class="review-item ${idx === 0 ? 'selected' : ''}" id="ri-${idx}" onclick="selectReview(${idx})">
+      <div class="ri-titlerow">
+        <div class="ri-title">${escH(item.title)}</div>
+        <span class="badge badge-${escH(item.severity)}">${escH(item.severity)}</span>
+      </div>
+      <div class="ri-note">${escH(item.shortNote)}</div>
+    </div>
+  `).join('');
+  selectReview(0);
+  renderAll();
+});
+</script>
+</body>
+</html>
