@@ -46,6 +46,11 @@
 - **Hook Version**: 1.02
 - **Date**: 20-04-2026 10:33
 - **Prompt**: @file:code-explorer.agent.md read the #file:code_explorer.html  make a new version of code explorer with the date in the name
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.4 mini
+- **Socratic Mode**: ON
+- **Changes Made**: Recreated docs/code_explorer_2026-04-20.html as a template-based code explorer for main.py with updated architecture diagrams, revised pattern and type hint analysis, refreshed code review items, performance notes, and next-step resources.
+- **Context and Reasons for Changes**: The user requested a new dated version of the code explorer. The updated page now reflects the current main.py behavior and uses the newer template structure with safe Mermaid content.
 
 ### **New Interaction**
 - **Agent Version**: 2.3
@@ -77,3 +82,19 @@
 - **Hook Version**: 1.02
 - **Date**: 20-04-2026 10:41
 - **Prompt**: @file:code-explorer.agent.md read the #file:code_explorer.html  make a new version of code explorer with the date in the name
+
+### **New Interaction**
+- **Agent Version**: 2.3
+- **Date**: 20-04-2026 10:48
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: @file:code-explorer.agent.md read the #file:code_explorer.html  make a new version of code explorer with the date in the name
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.4 mini
+- **Socratic Mode**: ON
+- **Changes Made**: Recreated docs/code_explorer_2026-04-20.html as a template-based code explorer for main.py with updated architecture diagrams, revised pattern and type hint analysis, refreshed code review items, performance notes, and next-step resources.
+- **Context and Reasons for Changes**: The user requested a new dated version of the code explorer. The updated page now reflects the current main.py behavior and uses the newer template structure with safe Mermaid content.
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 20-04-2026 11:03
+- **Prompt**: @file:code-explorer.agent.md read the #file:code_explorer.html  make a v2 of todays version
