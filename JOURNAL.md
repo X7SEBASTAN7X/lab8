@@ -95,6 +95,22 @@
 - **Context and Reasons for Changes**: The user requested a new dated version of the code explorer. The updated page now reflects the current main.py behavior and uses the newer template structure with safe Mermaid content.
 
 ### **New Interaction**
+- **Agent Version**: 2.3
+- **Date**: 20-04-2026 11:07
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: @file:code-explorer.agent.md read the #file:code_explorer.html  make a v2 of todays version
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.4 mini
+- **Socratic Mode**: ON
+- **Changes Made**: Created docs/code_explorer_2026-04-20_v2.html as a v2 copy of today’s explorer file and updated title/header metadata to indicate v2.
+- **Context and Reasons for Changes**: The user asked for a v2 of today’s code explorer version while keeping existing explorer files intact.
+
+### **New Interaction**
 - **Hook Version**: 1.02
 - **Date**: 20-04-2026 11:03
 - **Prompt**: @file:code-explorer.agent.md read the #file:code_explorer.html  make a v2 of todays version
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 20-04-2026 11:08
+- **Prompt**: yes, refresh the content and upgrade the diagram
