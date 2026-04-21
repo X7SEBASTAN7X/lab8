@@ -20,12 +20,16 @@ CUBE_MAX_SPEED = 200
 FLEE_RADIUS = 140
 FLEE_STEER = 1200
 
+CHASE_STEER = 800
+
 #Lifespan
 LIFESPAN_MIN = 20
 LIFESPAN_MAX = 60
 
-Color = tuple[int, int, int]
+#Random Bouncing
+BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX = 95,105
 
+Color = tuple[int, int, int]
 
 @dataclass
 class Cube:
@@ -38,8 +42,6 @@ class Cube:
     lifespan: float
     death: float
 
-
-
 def random_color() -> Color:
     # Keep colors bright enough to stand out from the dark background.
     return (
@@ -47,7 +49,6 @@ def random_color() -> Color:
         random.randint(70, 255),
         random.randint(70, 255),
     )
-
 
 def create_cube() -> Cube:
     size = random.randint(CUBE_MIN_SIZE, CUBE_MAX_SIZE)
@@ -81,24 +82,50 @@ def on_cube_bounce(cube: Cube, wall: str) -> None:
     """Stub hook: react to wall collisions (sound, score, effects, etc.)."""
     _ = (cube, wall)
 
-def find_bigger_neighbors(cube: Cube, cubes: list[Cube], radius: float) -> list[Cube]:
-    """Stub: return bigger cubes near the current cube."""
-    _ = (cube, cubes, radius)
-    # TODO Step 1: return only cubes larger than `cube.size`.
-    # TODO Step 1: keep only neighbors with center-distance <= radius.
+def find_neighbors(cube, cubes: list[Cube], radius: float)-> list[Cube]:
     close = []
     cx, cy = cube.x + cube.size / 2, cube.y + cube.size / 2
-    
     for neighbor in cubes:
         if neighbor is cube:
             continue
-        if neighbor.size > cube.size:
-            nx, ny = neighbor.x + neighbor.size / 2, neighbor.y + neighbor.size / 2
-            dist = sqrt((cx - nx)**2 + (cy - ny)**2)
-            if dist <= radius:
-                close.append(neighbor)
+        nx, ny = neighbor.x + neighbor.size / 2, neighbor.y + neighbor.size / 2
+        dist = sqrt((cx - nx)**2 + (cy - ny)**2)
+        if dist <= radius:
+            close.append(neighbor)
     return close
 
+def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> list[Cube]:
+    """Stub: return bigger cubes near the current cube."""
+    threats, targets = [], []
+    for neighbor in neighbors:
+        if neighbor.size > cube.size:
+            threats.append(neighbor)
+        elif neighbor.size < cube.size:
+            targets.append(neighbor)
+    return threats, targets
+
+def single_target(targets: list[Cube])-> Cube:
+    if not targets:
+        return None
+    smallest = targets[0]
+    for i in range(len(targets)):
+        if targets[i].size<smallest.size:
+            smallest=targets[i]
+    return smallest
+
+def compute_chase_steering(cube: Cube, target: Cube, steer_strength: float) -> tuple[float, float]:
+    if not target:
+        return 0.0, 0.0
+
+    cx, cy = cube.x + cube.size / 2, cube.y + cube.size / 2
+    tx, ty = target.x + target.size / 2, target.y + target.size / 2
+
+    dx, dy = tx - cx, ty - cy
+    dist = sqrt(dx**2 + dy**2)
+    
+    if dist > 0:
+        return (dx / dist) * steer_strength, (dy / dist) * steer_strength
+    return 0.0, 0.0
 
 def compute_flee_steering(cube: Cube, threats: list[Cube], steer_strength: float) -> tuple[float, float]:
     """Stub: compute steering vector that points away from nearby threats."""
@@ -151,8 +178,19 @@ def apply_steering(cube: Cube, steer_x: float, steer_y: float, dt: float) -> Non
 
 def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
     #Make it flee
-    threats = find_bigger_neighbors(cube, cubes, FLEE_RADIUS)
+    neighbors = find_neighbors(cube, cubes, FLEE_RADIUS)
+    
+    threats, targets = compare_neighbors(cube, neighbors)
+    target = single_target(targets)
+
     steer_x, steer_y = compute_flee_steering(cube, threats, FLEE_STEER)
+
+    if target:
+        chase_x, chase_y = compute_chase_steering(cube, target, CHASE_STEER)
+        
+        steer_x += chase_x
+        steer_y += chase_y
+
     apply_steering(cube, steer_x, steer_y, dt)
 
     cube.x += cube.vx * dt
@@ -161,23 +199,23 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
     if cube.x <= 0:
         cube.x = 0
         cube.vx *= -1
-        cube.vx *= random.randint(95,105)/100
+        cube.vx *= random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
         on_cube_bounce(cube, "left")
     elif cube.x + cube.size >= WINDOW_WIDTH:
         cube.x = WINDOW_WIDTH - cube.size
         cube.vx *= -1
-        cube.vx *= random.randint(95,105)/100
+        cube.vx *= random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
         on_cube_bounce(cube, "right")
 
     if cube.y <= 0:
         cube.y = 0
         cube.vy *= -1
         on_cube_bounce(cube, "top")
-        cube.vy *= random.randint(95,105)/100
+        cube.vy *= random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
     elif cube.y + cube.size >= WINDOW_HEIGHT:
         cube.y = WINDOW_HEIGHT - cube.size
         cube.vy *= -1
-        cube.vy *= random.randint(95,105)/100
+        cube.vy *= random.uniform(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
         on_cube_bounce(cube, "bottom")
 
 
