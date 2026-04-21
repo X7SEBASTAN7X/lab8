@@ -66,3 +66,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 21-04-2026 09:27
 - **Prompt**: Regenerate the code explorer reading my code and make sure to put the date on the filename
 
+### 21-04-2026 09:42
+- **Prompt**: can you give me which statemets are affected by this and is there a more efficient way to make it  from math import *
+
