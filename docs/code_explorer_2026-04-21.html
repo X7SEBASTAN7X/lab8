@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Explorer — main.py</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --bg: #1e1e2e;
+  --surface: #2a2a3e;
+  --surface2: #313148;
+  --text: #cdd6f4;
+  --muted: #a6adc8;
+  --accent: #89b4fa;
+  --green: #a6e3a1;
+  --yellow: #f9e2af;
+  --red: #f38ba8;
+  --mono: 'Courier New', Courier, monospace;
+  --radius: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; }
+a { color: var(--accent); }
+a:hover { text-decoration: underline; }
+
+header { padding: 1.5rem 2rem; border-bottom: 1px solid #3a3a55; background: var(--surface); }
+header h1 { font-size: 1.4rem; color: var(--accent); letter-spacing: -0.3px; }
+header p { color: var(--muted); font-size: 0.88rem; margin-top: 0.2rem; }
+header .file-badge { display: inline-block; background: var(--surface2); border-radius: 4px; padding: 0.1rem 0.5rem; font-family: var(--mono); font-size: 0.8rem; color: var(--yellow); margin-top: 0.3rem; }
+
+/* Tab navigation */
+.tab-nav { display: flex; padding: 0 2rem; background: var(--surface); border-bottom: 1px solid #3a3a55; flex-wrap: wrap; gap: 0; }
+.tab-btn { padding: 0.75rem 1.2rem; cursor: pointer; border: none; background: none; color: var(--muted); font-size: 0.88rem; border-bottom: 2px solid transparent; transition: all 0.18s; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* Tab panels */
+.tab-panel { display: none; padding: 2rem; max-width: 1280px; margin: 0 auto; }
+.tab-panel.active { display: block; }
+
+/* Cards */
+.card { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #3a3a55; }
+.card h3 { color: var(--accent); margin-bottom: 0.6rem; font-size: 1rem; }
+
+/* Two-column */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+
+/* Architecture sub-tabs */
+.arch-subnav { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.arch-btn { padding: 0.35rem 0.85rem; border-radius: 20px; border: 1px solid #444; background: none; color: var(--muted); cursor: pointer; font-size: 0.82rem; transition: all 0.18s; }
+.arch-btn:hover { border-color: var(--accent); color: var(--text); }
+.arch-btn.active { background: var(--accent); color: #1e1e2e; border-color: var(--accent); font-weight: 600; }
+.arch-panel { display: none; }
+.arch-panel.active { display: block; }
+
+.diag-container { background: var(--surface2); border-radius: var(--radius); padding: 1.5rem; min-height: 280px; overflow-x: auto; display: flex; justify-content: center; align-items: flex-start; }
+.diag-container svg { max-width: 100%; height: auto; }
+.diag-title { color: var(--accent); font-size: 1.05rem; font-weight: 600; margin-bottom: 0.75rem; }
+.diag-caption { color: var(--muted); font-size: 0.82rem; margin-top: 0.75rem; font-style: italic; border-left: 2px solid #444; padding-left: 0.6rem; }
+
+/* Patterns */
+.pattern-card { background: var(--surface2); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; border: 1px solid #3a3a55; }
+.pattern-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.pattern-icon { font-size: 1.1rem; }
+.pattern-title { font-weight: 600; color: var(--text); font-size: 0.95rem; }
+.pattern-desc { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
+.pattern-layers { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.6rem; }
+.layer { font-size: 0.8rem; padding: 0.28rem 0.6rem; border-radius: 4px; line-height: 1.4; }
+.layer-basics   { background: #1e3a2a; color: #a6e3a1; }
+.layer-eng      { background: #3a2e1a; color: #f9e2af; }
+.layer-arch     { background: #1a2a3e; color: #89b4fa; }
+.layer-label    { font-weight: 700; margin-right: 0.35rem; }
+.ext-link       { display: inline-block; font-size: 0.8rem; color: var(--accent); text-decoration: none; margin-top: 0.2rem; }
+.ext-link:hover { text-decoration: underline; }
+.fix-hint       { background: #1e1e2e; border-left: 3px solid var(--yellow); padding: 0.4rem 0.7rem; border-radius: 0 4px 4px 0; font-size: 0.8rem; color: var(--text); margin-top: 0.5rem; }
+code { font-family: var(--mono); font-size: 0.85em; background: #12121e; padding: 0.05em 0.3em; border-radius: 3px; color: var(--yellow); }
+
+/* Badges */
+.badge { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 12px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px; }
+.badge-high   { background: #4a1a2a; color: var(--red); }
+.badge-medium { background: #3e2e10; color: var(--yellow); }
+.badge-low    { background: #1a3220; color: var(--green); }
+.badge-score  { background: var(--surface2); color: var(--accent); font-size: 1rem; font-weight: 700; padding: 0.3rem 0.8rem; border: 1px solid var(--accent); border-radius: var(--radius); }
+
+/* Type Hints */
+.type-banner { display: flex; align-items: center; gap: 1.2rem; padding: 1.1rem 1.5rem; background: var(--surface2); border-radius: var(--radius); margin-bottom: 1.5rem; border: 1px solid #3a3a55; }
+.score-big { font-size: 2.2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+.score-verdict { color: var(--muted); font-size: 0.88rem; }
+
+/* Code Review */
+.review-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem; }
+@media (max-width: 800px) { .review-layout { grid-template-columns: 1fr; } }
+.review-left { background: var(--surface); border-radius: var(--radius); padding: 1.1rem; border: 1px solid #3a3a55; }
+.review-right { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; border: 1px solid #3a3a55; min-height: 320px; }
+.review-item { padding: 0.7rem 0.8rem; border-radius: 6px; cursor: pointer; margin-bottom: 0.5rem; border: 1px solid transparent; transition: all 0.15s; }
+.review-item:hover { border-color: #444; background: var(--surface2); }
+.review-item.selected { border-color: var(--accent); background: var(--surface2); }
+.ri-titlerow { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.ri-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.ri-note { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+pre.snippet { background: #12121e; border-radius: 5px; padding: 0.7rem; font-size: 0.76rem; overflow-x: auto; color: #cdd6f4; font-family: var(--mono); margin: 0.6rem 0; line-height: 1.5; border: 1px solid #2a2a3e; }
+.detail-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.9rem; }
+.detail-title { color: var(--accent); font-size: 1rem; font-weight: 700; }
+.detail-body { color: var(--muted); font-size: 0.86rem; line-height: 1.65; margin-bottom: 0.9rem; }
+.hint-box { background: var(--surface2); border-left: 3px solid var(--accent); padding: 0.6rem 0.8rem; border-radius: 0 4px 4px 0; font-size: 0.84rem; color: var(--text); }
+
+/* Performance */
+.perf-card { background: var(--surface2); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; border: 1px solid #3a3a55; }
+.perf-title { font-weight: 600; color: var(--text); margin-bottom: 0.4rem; }
+.perf-desc { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.5rem; }
+
+/* Next Steps */
+.ns-item { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.2rem; background: var(--surface2); border-radius: var(--radius); margin-bottom: 0.8rem; border: 1px solid #3a3a55; }
+.ns-num { font-size: 1.4rem; font-weight: 800; color: var(--accent); min-width: 2rem; line-height: 1.2; }
+.ns-text a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+.ns-text a:hover { text-decoration: underline; }
+.ns-desc { color: var(--muted); font-size: 0.83rem; margin-top: 0.2rem; }
+
+/* Fallback */
+.fallback { background: #2a1215; color: var(--red); padding: 1rem; border-radius: 6px; font-size: 0.72rem; font-family: var(--mono); overflow-x: auto; white-space: pre-wrap; }
+
+/* Section headings */
+.section-head { font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; }
+.section-head.green { color: var(--green); }
+.section-head.yellow { color: var(--yellow); }
+.section-head.red { color: var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Code Explorer</h1>
+  <span class="file-badge">main.py</span>
+  <p style="margin-top:0.4rem;">Project: lab8 • Student view for first year CS • Generated on 2026-04-21</p>
+</header>
+
+<nav class="tab-nav">
+<button class="tab-btn active" onclick="switchTab('architecture', this)">Architecture</button>
+<button class="tab-btn" onclick="switchTab('patterns', this)">Patterns</button>
+<button class="tab-btn" onclick="switchTab('typehints', this)">Type Hints</button>
+<button class="tab-btn" onclick="switchTab('codereview', this)">Code Review</button>
+<button class="tab-btn" onclick="switchTab('performance', this)">Performance</button>
+<button class="tab-btn" onclick="switchTab('nextsteps', this)">Next Steps</button>
+</nav>
+
+<div class="tab-panel active" id="tab-architecture">
+  <div class="card">
+    <h3>Program Architecture</h3>
+    <p style="color:var(--muted);font-size:0.86rem;margin-bottom:1rem;">Use these views to trace setup, update logic, rendering, and data movement across the game loop.</p>
+    <div class="arch-subnav">
+      <button class="arch-btn active" onclick="switchArch('call', this)">Call Graph</button>
+      <button class="arch-btn" onclick="switchArch('deps', this)">Dependency Graph</button>
+      <button class="arch-btn" onclick="switchArch('seqfull', this)">Full Sequence</button>
+      <button class="arch-btn" onclick="switchArch('seqlogic', this)">Steering Sequence</button>
+      <button class="arch-btn" onclick="switchArch('seqlife', this)">Life Sequence</button>
+      <button class="arch-btn" onclick="switchArch('data1', this)">Data Flow Cubes</button>
+      <button class="arch-btn" onclick="switchArch('data2', this)">Data Flow Position</button>
+      <button class="arch-btn" onclick="switchArch('data3', this)">Data Flow Steering</button>
+      <button class="arch-btn" onclick="switchArch('state', this)">Cube State</button>
+    </div>
+
+    <div class="arch-panel active" id="arch-call">
+      <div class="diag-title">Call Graph</div>
+      <div class="diag-container" id="diag-call_graph"></div>
+      <div class="diag-caption">The top level loop delegates each frame to update, lifecycle checks, and drawing routines.</div>
+    </div>
+
+    <div class="arch-panel" id="arch-deps">
+      <div class="diag-title">Dependency Graph</div>
+      <div class="diag-container" id="diag-dep_graph"></div>
+      <div class="diag-caption">The project file depends on pygame plus math, random, dataclasses, and time from the standard library.</div>
+    </div>
+
+    <div class="arch-panel" id="arch-seqfull">
+      <div class="diag-title">Full Sequence Diagram</div>
+      <div class="diag-container" id="diag-seq_full"></div>
+      <div class="diag-caption">One frame starts at the event loop, updates all cubes, then renders and flips display buffers.</div>
+    </div>
+
+    <div class="arch-panel" id="arch-seqlogic">
+      <div class="diag-title">Steering Runtime Sequence</div>
+      <div class="diag-container" id="diag-seq_steer"></div>
+      <div class="diag-caption">Steering combines flee and chase influences before velocity is normalized and applied.</div>
+    </div>
+
+    <div class="arch-panel" id="arch-seqlife">
+      <div class="diag-title">Lifecycle Runtime Sequence</div>
+      <div class="diag-container" id="diag-seq_life"></div>
+      <div class="diag-caption">After movement, each cube is checked for lifespan expiry and respawned when its death time is reached.</div>
+    </div>
+
+    <div class="arch-panel" id="arch-data1">
+      <div class="diag-title">Data Flow: cubes list</div>
+      <div class="diag-container" id="diag-data_cubes"></div>
+      <div class="diag-caption">The shared cubes list is initialized, passed to update logic, and reused for both physics and drawing.</div>
+    </div>
+
+    <div class="arch-panel" id="arch-data2">
+      <div class="diag-title">Data Flow: position fields</div>
+      <div class="diag-container" id="diag-data_pos"></div>
+      <div class="diag-caption">Position values are transformed by steering and wall collisions, then consumed by draw calls.</div>
+    </div>
+
+    <div class="arch-panel" id="arch-data3">
+      <div class="diag-title">Data Flow: steering vector</div>
+      <div class="diag-container" id="diag-data_steer"></div>
+      <div class="diag-caption">Steering starts as flee and chase vectors, then feeds velocity updates that preserve speed magnitude.</div>
+    </div>
+
+    <div class="arch-panel" id="arch-state">
+      <div class="diag-title">Optional State Diagram</div>
+      <div class="diag-container" id="diag-state_cube"></div>
+      <div class="diag-caption">This state view clarifies transitions between active movement, bounce handling, and respawn.</div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-panel" id="tab-patterns">
+  <div class="two-col">
+    <div>
+      <div class="section-head green">Good Patterns</div>
+
+      <div class="pattern-card">
+        <div class="pattern-header">
+          <span class="pattern-icon">✅</span>
+          <span class="pattern-title">Clear constant boundaries</span>
+        </div>
+        <div class="pattern-desc">Movement, sizes, and steering strengths are centralized in constants, so behavior tuning is simple and safe.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span>You define values once and reuse them.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight:</span>Centralized constants reduce hidden magic values and prevent accidental drift.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight:</span>This supports configuration driven balancing without touching core logic.</div>
+        </div>
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Magic_number_(programming)">Read more: Magic numbers</a>
+      </div>
+
+      <div class="pattern-card">
+        <div class="pattern-header">
+          <span class="pattern-icon">✅</span>
+          <span class="pattern-title">Behavior decomposition</span>
+        </div>
+        <div class="pattern-desc">Neighbor search, steering, movement, drawing, and lifecycle checks are split into focused functions.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span>Each function has one core job.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight:</span>Small functions are easier to test in isolation and debug with print probes.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight:</span>This separation can evolve into physics, AI, and presentation modules.</div>
+        </div>
+        <a class="ext-link" href="https://refactoring.guru/smells/long-method">Read more: Long method smell</a>
+      </div>
+
+      <div class="pattern-card">
+        <div class="pattern-header">
+          <span class="pattern-icon">✅</span>
+          <span class="pattern-title">Frame rate independence</span>
+        </div>
+        <div class="pattern-desc">Velocity and steering are multiplied by dt, so motion remains stable across different machine speeds.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span>You scale movement by elapsed time.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight:</span>This avoids gameplay speed changing with monitor refresh or CPU load.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight:</span>Time based updates make systems portable to fixed or variable tick loops.</div>
+        </div>
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Delta_timing">Read more: Delta timing</a>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-head yellow">Potential Issues</div>
+
+      <div class="pattern-card">
+        <div class="pattern-header">
+          <span class="pattern-icon">⚠️</span>
+          <span class="pattern-title">Wildcard math import</span>
+        </div>
+        <div class="pattern-desc">Using from math import star obscures where names come from and can collide with other symbols.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span>Readers cannot quickly tell which functions are imported.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight:</span>Namespace pollution increases maintenance risk as the file grows.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight:</span>Explicit imports improve module contracts and readability across the codebase.</div>
+        </div>
+        <div class="fix-hint">Hint: replace with explicit names like <code>from math import sqrt</code>.</div>
+        <a class="ext-link" href="https://docs.python.org/3/tutorial/modules.html">Read more: Python modules</a>
+      </div>
+
+      <div class="pattern-card">
+        <div class="pattern-header">
+          <span class="pattern-icon">⚠️</span>
+          <span class="pattern-title">Unvalidated startup asset</span>
+        </div>
+        <div class="pattern-desc">Music loading assumes the audio file exists and mixer setup succeeds, which can crash startup on missing files.</div>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics:</span>External files can be absent on another machine.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight:</span>A try except block around asset loading avoids hard failures.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight:</span>Graceful fallback improves portability and deployment reliability.</div>
+        </div>
+        <div class="fix-hint">Hint: guard load call and continue without music on failure.</div>
+        <a class="ext-link" href="https://docs.python.org/3/tutorial/errors.html">Read more: Python exceptions</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-panel" id="tab-typehints">
+  <div class="type-banner">
+    <div class="score-big">3/5</div>
+    <div class="score-verdict">Solid foundational typing with useful aliases, but consistency gaps reduce checker confidence.</div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3>Strengths</h3>
+      <ul style="padding-left:1.1rem;color:var(--muted);font-size:0.86rem;">
+        <li>Dataclass fields and alias Color provide explicit structure for cube state.</li>
+        <li>Most functions declare parameter and return annotations, including tuple and list generics.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Gaps</h3>
+      <ul style="padding-left:1.1rem;color:var(--muted);font-size:0.86rem;">
+        <li>compare_neighbors is annotated as list but returns two lists as a tuple.</li>
+        <li>single_target returns None when empty but return type does not allow Optional.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="tab-panel" id="tab-codereview">
+  <div class="review-layout">
+    <div class="review-left">
+      <div id="ri-0" class="review-item" onclick="selectReview(0)">
+        <div class="ri-titlerow"><span class="ri-title">Startup music failure path</span><span class="badge badge-high">high</span></div>
+        <div class="ri-note">Missing guard can crash startup.</div>
+      </div>
+      <div id="ri-1" class="review-item" onclick="selectReview(1)">
+        <div class="ri-titlerow"><span class="ri-title">compare_neighbors type mismatch</span><span class="badge badge-medium">medium</span></div>
+        <div class="ri-note">Annotation disagrees with real return.</div>
+      </div>
+      <div id="ri-2" class="review-item" onclick="selectReview(2)">
+        <div class="ri-titlerow"><span class="ri-title">single_target optional return</span><span class="badge badge-medium">medium</span></div>
+        <div class="ri-note">None path not reflected in type.</div>
+      </div>
+      <div id="ri-3" class="review-item" onclick="selectReview(3)">
+        <div class="ri-titlerow"><span class="ri-title">Wildcard import readability risk</span><span class="badge badge-low">low</span></div>
+        <div class="ri-note">Namespace clarity drops as file grows.</div>
+      </div>
+      <div id="ri-4" class="review-item" onclick="selectReview(4)">
+        <div class="ri-titlerow"><span class="ri-title">Unused create_player helper</span><span class="badge badge-low">low</span></div>
+        <div class="ri-note">Dead code increases cognitive load.</div>
+      </div>
+    </div>
+
+    <div class="review-right">
+      <div id="review-detail-panel"></div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-panel" id="tab-performance">
+  <div class="two-col">
+    <div>
+      <div class="section-head green">Performance Wins</div>
+      <div class="perf-card">
+        <div class="perf-title">Normalized velocity policy</div>
+        <div class="perf-desc">apply_steering preserves original speed magnitude, preventing runaway velocity growth and keeping simulation stable.</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-title">Time scaled updates</div>
+        <div class="perf-desc">dt based integration keeps workload proportional and avoids over stepping on fast machines.</div>
+      </div>
+    </div>
+    <div>
+      <div class="section-head red">Performance Risks</div>
+      <div class="perf-card">
+        <div class="perf-title">Quadratic neighbor checks</div>
+        <div class="perf-desc">find_neighbors scans all cubes for each cube every frame, producing O(n squared) behavior as count increases.</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-title">Heavy distance math in loops</div>
+        <div class="perf-desc">Repeated sqrt calls inside tight loops increase CPU cost; squared distance comparisons can reduce overhead.</div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:1rem;"><span class="badge-score">3 / 6</span> <span style="color:var(--muted);font-size:0.86rem;margin-left:0.6rem;">Current design is fine for small counts but will bottleneck first in neighbor search.</span></div>
+</div>
+
+<div class="tab-panel" id="tab-nextsteps">
+  <div class="card">
+    <h3>Learning Resources</h3>
+    <div class="ns-item">
+      <div class="ns-num">1</div>
+      <div class="ns-text">
+        <a href="https://docs.python.org/3/library/dataclasses.html">Python dataclasses</a>
+        <div class="ns-desc">Understand how dataclasses simplify state containers like Cube.</div>
+      </div>
+    </div>
+    <div class="ns-item">
+      <div class="ns-num">2</div>
+      <div class="ns-text">
+        <a href="https://docs.python.org/3/library/typing.html">Python typing module</a>
+        <div class="ns-desc">Review Optional, tuple returns, and consistent annotations for safer refactors.</div>
+      </div>
+    </div>
+    <div class="ns-item">
+      <div class="ns-num">3</div>
+      <div class="ns-text">
+        <a href="https://www.pygame.org/docs/">Pygame documentation</a>
+        <div class="ns-desc">Dive into display, mixer, and event APIs used in the game loop.</div>
+      </div>
+    </div>
+    <div class="ns-item">
+      <div class="ns-num">4</div>
+      <div class="ns-text">
+        <a href="https://refactoring.guru/refactoring/smells">Refactoring code smells</a>
+        <div class="ns-desc">Map review findings to standard refactoring patterns.</div>
+      </div>
+    </div>
+    <div class="ns-item">
+      <div class="ns-num">5</div>
+      <div class="ns-text">
+        <a href="https://en.wikipedia.org/wiki/Spatial_partition">Spatial partitioning</a>
+        <div class="ns-desc">Learn broad phase techniques to replace O(n squared) neighbor scanning.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tab switching ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Architecture sub-tabs ──
+function switchArch(name, btn) {
+  document.querySelectorAll('.arch-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.arch-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('arch-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Code Review ──
+const reviewItems = [
+  {
+    id: 0,
+    title: 'Startup music failure path',
+    severity: 'high',
+    snippet: `music = pygame.mixer.music.load("overworld_day.mp3")\npygame.mixer.music.play(-1)`,
+    shortNote: 'Missing guard can crash startup.',
+    fullExplanation: 'Loading audio during startup assumes both mixer support and file availability.\nIf the file is missing, this call can raise and abort the app before rendering starts.\nWrap this section in try except and continue with silent mode when loading fails.',
+    improvementHint: 'Use try except around mixer load and log a short warning so gameplay still starts.'
+  },
+  {
+    id: 1,
+    title: 'compare_neighbors type mismatch',
+    severity: 'medium',
+    snippet: `def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> list[Cube]:\n    threats, targets = [], []\n    ...\n    return threats, targets`,
+    shortNote: 'Annotation disagrees with real return.',
+    fullExplanation: 'The signature advertises one list, but the function returns two lists.\nType checkers and readers will infer the wrong contract, causing confusion at call sites.\nDeclare tuple[list[Cube], list[Cube]] to align behavior and documentation.',
+    improvementHint: 'Change the return annotation to tuple[list[Cube], list[Cube]].'
+  },
+  {
+    id: 2,
+    title: 'single_target optional return',
+    severity: 'medium',
+    snippet: `def single_target(targets: list[Cube])-> Cube:\n    if not targets:\n        return None`,
+    shortNote: 'None path not reflected in type.',
+    fullExplanation: 'The function can return None when no target exists, but the type says Cube only.\nThis mismatch weakens static checks and can hide None handling bugs.\nUse Cube | None or Optional[Cube] so callers are forced to handle empty cases.',
+    improvementHint: 'Update return type to Cube | None and keep existing if target guard at call sites.'
+  },
+  {
+    id: 3,
+    title: 'Wildcard import readability risk',
+    severity: 'low',
+    snippet: `from math import *`,
+    shortNote: 'Namespace clarity drops as file grows.',
+    fullExplanation: 'Wildcard imports make symbol origin ambiguous and can shadow local names.\nThis is manageable in short files but scales poorly with more modules and helpers.\nExplicit imports improve readability and reduce accidental name collisions.',
+    improvementHint: 'Import only needed names such as sqrt and keep the namespace explicit.'
+  },
+  {
+    id: 4,
+    title: 'Unused create_player helper',
+    severity: 'low',
+    snippet: `def create_player() -> Cube:\n    ...\n    return Cube(...)`,
+    shortNote: 'Dead code increases cognitive load.',
+    fullExplanation: 'The helper is currently defined but never called in main flow.\nUnused code increases reading overhead and can drift from behavior over time.\nEither wire it into gameplay or remove it until needed.',
+    improvementHint: 'If future player control is planned, add a TODO near main where player spawn will be integrated.'
+  }
+];
+
+function escH(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function selectReview(id) {
+  document.querySelectorAll('.review-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('ri-' + id).classList.add('selected');
+  const item = reviewItems[id];
+  const sevClass = 'badge-' + item.severity;
+  const body = item.fullExplanation.replace(/\n/g, '<br>');
+  document.getElementById('review-detail-panel').innerHTML = `
+    <div>
+      <div class="detail-head">
+        <span class="detail-title">${escH(item.title)}</span>
+        <span class="badge ${escH(sevClass)}">${escH(item.severity)}</span>
+      </div>
+      <div class="detail-body">${body}</div>
+      <pre class="snippet">${escH(item.snippet)}</pre>
+      <div class="hint-box">&#128161; <strong>Improvement:</strong> ${escH(item.improvementHint)}</div>
+    </div>`;
+}
+
+// ── Mermaid ──
+mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+
+const diagrams = {
+  call_graph: String.raw`graph TD
+    n1[main entry] --> n2[init pygame]
+    n2 --> n3[spawn cubes]
+    n3 --> n4[event loop]
+    n4 --> n5[update cube]
+    n5 --> n6[find neighbors]
+    n5 --> n7[compute flee]
+    n5 --> n8[compute chase]
+    n5 --> n9[apply steering]
+    n5 --> n10[wall bounce]
+    n4 --> n11[check kill]
+    n4 --> n12[draw cube]
+    n4 --> n13[draw hud]
+    n4 --> n14[flip display]`,
+  dep_graph: String.raw`graph LR
+    d1[main py file] --> d2[pygame lib]
+    d1 --> d3[math lib]
+    d1 --> d4[random lib]
+    d1 --> d5[time lib]
+    d1 --> d6[dataclass lib]
+    click d2 href "https://www.pygame.org/docs/" "Open docs"
+    click d3 href "https://docs.python.org/3/library/math.html" "Open docs"
+    click d4 href "https://docs.python.org/3/library/random.html" "Open docs"
+    click d5 href "https://docs.python.org/3/library/time.html" "Open docs"
+    click d6 href "https://docs.python.org/3/library/dataclasses.html" "Open docs"`,
+  seq_full: String.raw`sequenceDiagram
+    participant p1 as "main loop"
+    participant p2 as "event queue"
+    participant p3 as "cube update"
+    participant p4 as "life check"
+    participant p5 as "render pass"
+    p1 ->> p2: read events
+    p2 -->> p1: input batch
+    p1 ->> p3: update each cube
+    p3 -->> p1: movement done
+    p1 ->> p4: check each cube
+    p4 -->> p1: respawn done
+    p1 ->> p5: draw frame
+    p5 -->> p1: frame drawn`,
+  seq_steer: String.raw`sequenceDiagram
+    participant p1 as "update cube"
+    participant p2 as "near scan"
+    participant p3 as "flee calc"
+    participant p4 as "chase calc"
+    participant p5 as "speed apply"
+    p1 ->> p2: find neighbors
+    p2 -->> p1: threat target sets
+    p1 ->> p3: flee vector
+    p3 -->> p1: flee result
+    p1 ->> p4: chase vector
+    p4 -->> p1: chase result
+    p1 ->> p5: merge steering
+    p5 -->> p1: velocity ready`,
+  seq_life: String.raw`sequenceDiagram
+    participant p1 as "main loop"
+    participant p2 as "time check"
+    participant p3 as "respawn path"
+    p1 ->> p2: pass cube
+    p2 ->> p2: compare death
+    p2 ->> p3: build new cube
+    p3 -->> p2: new cube ready
+    p2 -->> p1: cube return`,
+  data_cubes: String.raw`graph TD
+    n1[startup list] --> n2[spawn call]
+    n2 --> n3[cubes state]
+    n3 --> n4[update pass]
+    n4 --> n5[kill check]
+    n5 --> n6[draw pass]
+    n6 --> n7[hud count]`,
+  data_pos: String.raw`graph TD
+    n1[spawn coords] --> n2[current pos]
+    n2 --> n3[steer update]
+    n3 --> n4[dt move]
+    n4 --> n5[wall clamp]
+    n5 --> n6[circle draw]`,
+  data_steer: String.raw`graph TD
+    n1[threat list] --> n3[flee vector]
+    n2[target pick] --> n4[chase vector]
+    n3 --> n5[sum vector]
+    n4 --> n5
+    n5 --> n6[velocity update]
+    n6 --> n7[speed keep]`,
+  state_cube: String.raw`stateDiagram-v2
+    s1: alive move
+    s2: bounce wall
+    s3: death check
+    s4: respawn new
+    [*] --> s1
+    s1 --> s2: hit wall
+    s2 --> s1: invert speed
+    s1 --> s3: frame end
+    s3 --> s1: still alive
+    s3 --> s4: death reached
+    s4 --> s1: new cube`
+};
+
+let renderCounter = 0;
+
+async function renderDiagram(key, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const source = diagrams[key];
+  if (!source) { container.innerHTML = '<p style="color:var(--muted)">No diagram source found.</p>'; return; }
+  const uid = 'mmd-' + key + '-' + (++renderCounter);
+  try {
+    const { svg, bindFunctions } = await mermaid.render(uid, source);
+    container.innerHTML = svg;
+    if (typeof bindFunctions === 'function') bindFunctions(container);
+  } catch (err) {
+    container.innerHTML = '<pre class="fallback">Render failed: ' + err.message + '\n\nSource:\n' + source + '</pre>';
+  }
+}
+
+async function renderAll() {
+  for (const [key] of Object.entries(diagrams)) {
+    await renderDiagram(key, 'diag-' + key);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  selectReview(0);
+  renderAll();
+});
+</script>
+</body>
+</html>

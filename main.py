@@ -1,5 +1,5 @@
 from __future__ import annotations
-from math import *
+from math import sqrt
 import random
 from dataclasses import dataclass
 import time
@@ -82,7 +82,7 @@ def on_cube_bounce(cube: Cube, wall: str) -> None:
     """Stub hook: react to wall collisions (sound, score, effects, etc.)."""
     _ = (cube, wall)
 
-def find_neighbors(cube, cubes: list[Cube], radius: float)-> list[Cube]:
+def find_neighbors(cube: Cube, cubes: list[Cube], radius: float)-> list[Cube]:
     close = []
     cx, cy = cube.x + cube.size / 2, cube.y + cube.size / 2
     for neighbor in cubes:
@@ -94,7 +94,7 @@ def find_neighbors(cube, cubes: list[Cube], radius: float)-> list[Cube]:
             close.append(neighbor)
     return close
 
-def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> list[Cube]:
+def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> tuple[list[Cube], list[Cube]]:
     """Stub: return bigger cubes near the current cube."""
     threats, targets = [], []
     for neighbor in neighbors:
@@ -104,7 +104,7 @@ def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> list[Cube]:
             targets.append(neighbor)
     return threats, targets
 
-def single_target(targets: list[Cube])-> Cube:
+def single_target(targets: list[Cube])-> Cube | None:
     if not targets:
         return None
     smallest = targets[0]
@@ -146,8 +146,8 @@ def compute_flee_steering(cube: Cube, threats: list[Cube], steer_strength: float
         
         if dist > 0:
             weight = (FLEE_RADIUS - dist) / FLEE_RADIUS # To now how urgent it is
-            steer_x += (dx / dist) * weight
-            steer_y += (dy / dist) * weight
+            steer_x += (dx / dist) * max(0.0, weight) 
+            steer_y += (dy / dist) * max(0.0, weight) 
 
     total_dist = sqrt(steer_x**2 + steer_y**2)
     if total_dist>0:
@@ -179,7 +179,7 @@ def apply_steering(cube: Cube, steer_x: float, steer_y: float, dt: float) -> Non
 def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
     #Make it flee
     neighbors = find_neighbors(cube, cubes, FLEE_RADIUS)
-    
+
     threats, targets = compare_neighbors(cube, neighbors)
     target = single_target(targets)
 
@@ -251,6 +251,12 @@ def draw_hud(
     text = font.render(message, True, (235, 238, 245))
     surface.blit(text, (14, 12))
 
+def load_music(filename:str)->None:
+    try:
+        pygame.mixer.music.load(filename)
+        pygame.mixer.music.play(-1)
+    except FileNotFoundError:
+        print(f'File not found: {filename}')
 
 def main() -> None:
     pygame.init()
@@ -258,8 +264,7 @@ def main() -> None:
     pygame.display.set_caption("Moving Cubes or Circles")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("couriernew", 20)
-    music = pygame.mixer.music.load("overworld_day.mp3")
-    pygame.mixer.music.play(-1)
+    load_music("overworld_day.mp3")
 
     cubes = [customize_spawn(create_cube()) for _ in range(CUBE_COUNT)]
 

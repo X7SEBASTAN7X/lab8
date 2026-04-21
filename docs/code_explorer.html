@@ -1,933 +1,632 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Explorer: main.py</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Explorer - main.py</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --bg: #1e1e2e;
+  --surface: #2a2a3e;
+  --surface2: #313148;
+  --text: #cdd6f4;
+  --muted: #a6adc8;
+  --accent: #89b4fa;
+  --green: #a6e3a1;
+  --yellow: #f9e2af;
+  --red: #f38ba8;
+  --mono: 'Courier New', Courier, monospace;
+  --radius: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; }
+a { color: var(--accent); }
+a:hover { text-decoration: underline; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #0d1117;
-            color: #e6edf3;
-            line-height: 1.6;
-        }
+header { padding: 1.5rem 2rem; border-bottom: 1px solid #3a3a55; background: var(--surface); }
+header h1 { font-size: 1.4rem; color: var(--accent); letter-spacing: -0.3px; }
+header p { color: var(--muted); font-size: 0.88rem; margin-top: 0.2rem; }
+header .file-badge { display: inline-block; background: var(--surface2); border-radius: 4px; padding: 0.1rem 0.5rem; font-family: var(--mono); font-size: 0.8rem; color: var(--yellow); margin-top: 0.3rem; }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+/* Tab navigation */
+.tab-nav { display: flex; padding: 0 2rem; background: var(--surface); border-bottom: 1px solid #3a3a55; flex-wrap: wrap; gap: 0; }
+.tab-btn { padding: 0.75rem 1.2rem; cursor: pointer; border: none; background: none; color: var(--muted); font-size: 0.88rem; border-bottom: 2px solid transparent; transition: all 0.18s; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
-        header {
-            margin-bottom: 30px;
-            border-bottom: 1px solid #30363d;
-            padding-bottom: 20px;
-        }
+/* Tab panels */
+.tab-panel { display: none; padding: 2rem; max-width: 1280px; margin: 0 auto; }
+.tab-panel.active { display: block; }
 
-        .header-title {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
+/* Cards */
+.card { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #3a3a55; }
+.card h3 { color: var(--accent); margin-bottom: 0.6rem; font-size: 1rem; }
 
-        .file-badge {
-            display: inline-block;
-            background: #1f6feb;
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 500;
-            margin-right: 8px;
-        }
+/* Two-column */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
 
-        .header-meta {
-            font-size: 13px;
-            color: #8b949e;
-            margin-top: 8px;
-        }
+/* Architecture sub-tabs */
+.arch-subnav { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.arch-btn { padding: 0.35rem 0.85rem; border-radius: 20px; border: 1px solid #444; background: none; color: var(--muted); cursor: pointer; font-size: 0.82rem; transition: all 0.18s; }
+.arch-btn:hover { border-color: var(--accent); color: var(--text); }
+.arch-btn.active { background: var(--accent); color: #1e1e2e; border-color: var(--accent); font-weight: 600; }
+.arch-panel { display: none; }
+.arch-panel.active { display: block; }
 
-        .tab-nav {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid #30363d;
-            flex-wrap: wrap;
-        }
+.diag-container { background: var(--surface2); border-radius: var(--radius); padding: 1.5rem; min-height: 280px; overflow-x: auto; display: flex; justify-content: center; align-items: flex-start; }
+.diag-container svg { max-width: 100%; height: auto; }
+.diag-title { color: var(--accent); font-size: 1.05rem; font-weight: 600; margin-bottom: 0.75rem; }
+.diag-caption { color: var(--muted); font-size: 0.82rem; margin-top: 0.75rem; font-style: italic; border-left: 2px solid #444; padding-left: 0.6rem; }
 
-        .tab-nav button {
-            background: none;
-            border: none;
-            color: #8b949e;
-            cursor: pointer;
-            padding: 12px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
+/* Patterns */
+.pattern-card { background: var(--surface2); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; border: 1px solid #3a3a55; }
+.pattern-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.pattern-icon { font-size: 1.1rem; }
+.pattern-title { font-weight: 600; color: var(--text); font-size: 0.95rem; }
+.pattern-desc { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
+.pattern-layers { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.6rem; }
+.layer { font-size: 0.8rem; padding: 0.28rem 0.6rem; border-radius: 4px; line-height: 1.4; }
+.layer-basics   { background: #1e3a2a; color: #a6e3a1; }
+.layer-eng      { background: #3a2e1a; color: #f9e2af; }
+.layer-arch     { background: #1a2a3e; color: #89b4fa; }
+.layer-label    { font-weight: 700; margin-right: 0.35rem; }
+.ext-link       { display: inline-block; font-size: 0.8rem; color: var(--accent); text-decoration: none; margin-top: 0.2rem; }
+.ext-link:hover { text-decoration: underline; }
+.fix-hint       { background: #1e1e2e; border-left: 3px solid var(--yellow); padding: 0.4rem 0.7rem; border-radius: 0 4px 4px 0; font-size: 0.8rem; color: var(--text); margin-top: 0.5rem; }
+code { font-family: var(--mono); font-size: 0.85em; background: #12121e; padding: 0.05em 0.3em; border-radius: 3px; color: var(--yellow); }
 
-        .tab-nav button:hover {
-            color: #c9d1d9;
-        }
+/* Badges */
+.badge { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 12px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px; }
+.badge-high   { background: #4a1a2a; color: var(--red); }
+.badge-medium { background: #3e2e10; color: var(--yellow); }
+.badge-low    { background: #1a3220; color: var(--green); }
+.badge-score  { background: var(--surface2); color: var(--accent); font-size: 1rem; font-weight: 700; padding: 0.3rem 0.8rem; border: 1px solid var(--accent); border-radius: var(--radius); }
 
-        .tab-nav button.active {
-            color: #58a6ff;
-            border-bottom-color: #58a6ff;
-        }
+/* Type Hints */
+.type-banner { display: flex; align-items: center; gap: 1.2rem; padding: 1.1rem 1.5rem; background: var(--surface2); border-radius: var(--radius); margin-bottom: 1.5rem; border: 1px solid #3a3a55; }
+.score-big { font-size: 2.2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+.score-verdict { color: var(--muted); font-size: 0.88rem; }
 
-        .tab-panel {
-            display: none;
-            animation: fadeIn 0.3s;
-        }
+/* Code Review */
+.review-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem; }
+@media (max-width: 800px) { .review-layout { grid-template-columns: 1fr; } }
+.review-left { background: var(--surface); border-radius: var(--radius); padding: 1.1rem; border: 1px solid #3a3a55; }
+.review-right { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; border: 1px solid #3a3a55; min-height: 320px; }
+.review-item { padding: 0.7rem 0.8rem; border-radius: 6px; cursor: pointer; margin-bottom: 0.5rem; border: 1px solid transparent; transition: all 0.15s; }
+.review-item:hover { border-color: #444; background: var(--surface2); }
+.review-item.selected { border-color: var(--accent); background: var(--surface2); }
+.ri-titlerow { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.ri-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.ri-note { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+pre.snippet { background: #12121e; border-radius: 5px; padding: 0.7rem; font-size: 0.76rem; overflow-x: auto; color: #cdd6f4; font-family: var(--mono); margin: 0.6rem 0; line-height: 1.5; border: 1px solid #2a2a3e; }
+.detail-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.9rem; }
+.detail-title { color: var(--accent); font-size: 1rem; font-weight: 700; }
+.detail-body { color: var(--muted); font-size: 0.86rem; line-height: 1.65; margin-bottom: 0.9rem; }
+.hint-box { background: var(--surface2); border-left: 3px solid var(--accent); padding: 0.6rem 0.8rem; border-radius: 0 4px 4px 0; font-size: 0.84rem; color: var(--text); }
 
-        .tab-panel.active {
-            display: block;
-        }
+/* Performance */
+.perf-card { background: var(--surface2); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; border: 1px solid #3a3a55; }
+.perf-title { font-weight: 600; color: var(--text); margin-bottom: 0.4rem; }
+.perf-desc { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.5rem; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+/* Next Steps */
+.ns-item { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.2rem; background: var(--surface2); border-radius: var(--radius); margin-bottom: 0.8rem; border: 1px solid #3a3a55; }
+.ns-num { font-size: 1.4rem; font-weight: 800; color: var(--accent); min-width: 2rem; line-height: 1.2; }
+.ns-text a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+.ns-text a:hover { text-decoration: underline; }
+.ns-desc { color: var(--muted); font-size: 0.83rem; margin-top: 0.2rem; }
 
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 24px 0 16px;
-        }
+/* Fallback */
+.fallback { background: #2a1215; color: var(--red); padding: 1rem; border-radius: 6px; font-size: 0.72rem; font-family: var(--mono); overflow-x: auto; white-space: pre-wrap; }
 
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin: 20px 0;
-        }
-
-        .pattern-card {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 16px;
-            transition: border-color 0.2s;
-        }
-
-        .pattern-card:hover {
-            border-color: #58a6ff;
-        }
-
-        .pattern-card h3 {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #79c0ff;
-        }
-
-        .pattern-card p {
-            font-size: 13px;
-            margin-bottom: 12px;
-            color: #c9d1d9;
-        }
-
-        .pattern-layers {
-            border-top: 1px solid #30363d;
-            padding-top: 12px;
-        }
-
-        .layer-basics, .layer-eng, .layer-arch {
-            margin: 12px 0;
-            font-size: 12px;
-            line-height: 1.5;
-        }
-
-        .layer-basics strong, .layer-eng strong, .layer-arch strong {
-            color: #79c0ff;
-        }
-
-        .issue-marker {
-            color: #f85149;
-            font-weight: 600;
-        }
-
-        .win-marker {
-            color: #3fb950;
-            font-weight: 600;
-        }
-
-        .diag-container {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 16px;
-            margin: 16px 0;
-            overflow-x: auto;
-        }
-
-        .diag-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #79c0ff;
-        }
-
-        .diag-caption {
-            font-size: 12px;
-            color: #8b949e;
-            margin-top: 8px;
-            font-style: italic;
-        }
-
-        .arch-subnav {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            border-bottom: 1px solid #30363d;
-        }
-
-        .arch-subnav button {
-            background: none;
-            border: none;
-            color: #8b949e;
-            cursor: pointer;
-            padding: 8px 12px;
-            font-size: 12px;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .arch-subnav button:hover {
-            color: #c9d1d9;
-        }
-
-        .arch-subnav button.active {
-            color: #58a6ff;
-            border-bottom-color: #58a6ff;
-        }
-
-        .arch-panel {
-            display: none;
-        }
-
-        .arch-panel.active {
-            display: block;
-        }
-
-        .type-banner {
-            background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
-            color: #fff;
-            padding: 16px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .type-banner .score {
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .review-layout {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 20px;
-        }
-
-        .review-item {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 8px;
-        }
-
-        .review-item:hover {
-            border-color: #58a6ff;
-            background: #0d1117;
-        }
-
-        .review-item.active {
-            border-color: #58a6ff;
-            background: #1f6feb;
-        }
-
-        .review-item-title {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .review-item-severity {
-            display: inline-block;
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .severity-high {
-            background: rgba(248, 81, 73, 0.2);
-            color: #f85149;
-        }
-
-        .severity-medium {
-            background: rgba(215, 104, 0, 0.2);
-            color: #d76800;
-        }
-
-        .severity-low {
-            background: rgba(58, 166, 235, 0.2);
-            color: #58a6ff;
-        }
-
-        #review-detail-panel {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 20px;
-            position: sticky;
-            top: 20px;
-        }
-
-        .detail-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #79c0ff;
-        }
-
-        .detail-section {
-            margin: 16px 0;
-            font-size: 13px;
-        }
-
-        .detail-label {
-            color: #8b949e;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .code-snippet {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 4px;
-            padding: 12px;
-            margin: 8px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            color: #79c0ff;
-            overflow-x: auto;
-        }
-
-        .badge-score {
-            display: inline-block;
-            background: #238636;
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-weight: 600;
-            margin-top: 12px;
-        }
-
-        .ns-item {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 16px;
-            margin-bottom: 12px;
-            transition: border-color 0.2s;
-        }
-
-        .ns-item:hover {
-            border-color: #58a6ff;
-        }
-
-        .ns-item h4 {
-            margin-bottom: 6px;
-            color: #79c0ff;
-            font-size: 13px;
-        }
-
-        .ns-item p {
-            font-size: 12px;
-            color: #8b949e;
-            margin-bottom: 8px;
-        }
-
-        .ns-item a {
-            color: #58a6ff;
-            text-decoration: none;
-            font-size: 12px;
-        }
-
-        .ns-item a:hover {
-            text-decoration: underline;
-        }
-
-        .mermaid-error {
-            background: #161b22;
-            border: 1px solid #f85149;
-            border-radius: 4px;
-            padding: 12px;
-            font-family: monospace;
-            font-size: 11px;
-            color: #f85149;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        @media (max-width: 768px) {
-            .two-col, .review-layout {
-                grid-template-columns: 1fr;
-            }
-
-            #review-detail-panel {
-                position: static;
-            }
-
-            .tab-nav {
-                overflow-x: auto;
-            }
-        }
-    </style>
+/* Section headings */
+.section-head { font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; }
+.section-head.green { color: var(--green); }
+.section-head.yellow { color: var(--yellow); }
+.section-head.red { color: var(--red); }
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1 class="header-title">
-                <span class="file-badge">main.py</span>
-                Pygame Cube Steering Simulation
-            </h1>
-            <div class="header-meta">
-                📊 Learning Site | Architecture Analysis • Patterns • Type Hints • Code Review • Performance
-            </div>
-        </header>
 
-        <div class="tab-nav">
-            <button class="tab-button active" data-tab="architecture" onclick="showTab('architecture', this)">🏗️ Architecture</button>
-            <button class="tab-button" data-tab="patterns" onclick="showTab('patterns', this)">✨ Patterns</button>
-            <button class="tab-button" data-tab="typehints" onclick="showTab('typehints', this)">📝 Type Hints</button>
-            <button class="tab-button" data-tab="codereview" onclick="showTab('codereview', this)">🔍 Code Review</button>
-            <button class="tab-button" data-tab="performance" onclick="showTab('performance', this)">⚡ Performance</button>
-            <button class="tab-button" data-tab="nextsteps" onclick="showTab('nextsteps', this)">🚀 Next Steps</button>
-        </div>
+<header>
+  <h1>Code Explorer</h1>
+  <span class="file-badge">main.py</span>
+  <p style="margin-top:0.4rem;">Simulation view of cube steering, bounce, lifecycle, and frame update flow.</p>
+</header>
 
-        <!-- ARCHITECTURE TAB -->
-        <div id="architecture" class="tab-panel active">
-            <div class="arch-subnav">
-                <button class="arch-subbutton active" data-arch="callgraph" onclick="showArch('callgraph', this)">Call Graph</button>
-                <button class="arch-subbutton" data-arch="dependencies" onclick="showArch('dependencies', this)">Dependencies</button>
-                <button class="arch-subbutton" data-arch="sequence1" onclick="showArch('sequence1', this)">Sequence: Update Cycle</button>
-                <button class="arch-subbutton" data-arch="sequence2" onclick="showArch('sequence2', this)">Sequence: Steering</button>
-                <button class="arch-subbutton" data-arch="dataflow" onclick="showArch('dataflow', this)">Data Flow</button>
-            </div>
+<nav class="tab-nav">
+<button class="tab-btn active" onclick="switchTab('architecture', this)">Architecture</button>
+<button class="tab-btn" onclick="switchTab('patterns', this)">Patterns</button>
+<button class="tab-btn" onclick="switchTab('typehints', this)">Type Hints</button>
+<button class="tab-btn" onclick="switchTab('codereview', this)">Code Review</button>
+<button class="tab-btn" onclick="switchTab('performance', this)">Performance</button>
+<button class="tab-btn" onclick="switchTab('nextsteps', this)">Next Steps</button>
+</nav>
 
-            <div id="callgraph" class="arch-panel active">
-                <div class="diag-title">📌 Call Graph</div>
-                <div class="diag-container" id="diag-callgraph"></div>
-                <div class="diag-caption">How functions call each other during the main update loop. The main() function orchestrates the pygame event loop, which repeatedly calls update_cube() for each cube.</div>
-            </div>
-
-            <div id="dependencies" class="arch-panel">
-                <div class="diag-title">📌 Module Dependencies</div>
-                <div class="diag-container" id="diag-dependencies"></div>
-                <div class="diag-caption">External dependencies and project structure. Pygame is the primary graphics/event framework; math and random provide utilities; dataclasses provide the Cube structure.</div>
-            </div>
-
-            <div id="sequence1" class="arch-panel">
-                <div class="diag-title">📌 Sequence: Main Update Loop</div>
-                <div class="diag-container" id="diag-sequence1"></div>
-                <div class="diag-caption">During each frame (~60 FPS), main() orchestrates input handling, cube updates, rendering, and FPS display. For each cube, update_cube() computes steering and physics.</div>
-            </div>
-
-            <div id="sequence2" class="arch-panel">
-                <div class="diag-title">📌 Sequence: Steering Algorithm</div>
-                <div class="diag-container" id="diag-sequence2"></div>
-                <div class="diag-caption">For each cube, the steering logic identifies threats (bigger neighbors), computes a flee vector, and applies it to velocity. This creates emergent crowd behavior.</div>
-            </div>
-
-            <div id="dataflow" class="arch-panel">
-                <div class="diag-title">📌 Data Flow: Steering Computation</div>
-                <div class="diag-container" id="diag-dataflow"></div>
-                <div class="diag-caption">The primary data flow tract: from cube state through threat detection, steering computation, velocity update, and final position. Encapsulates the core steering behavior.</div>
-            </div>
-        </div>
-
-        <!-- PATTERNS TAB -->
-        <div id="patterns" class="tab-panel">
-            <h2 class="section-title">✅ 3 Good Patterns</h2>
-            <div class="two-col">
-                <div class="pattern-card">
-                    <h3>Dataclass for Clear Structure</h3>
-                    <p>The Cube dataclass provides a strongly-typed, immutable data container with field validation and automatic __init__, __repr__, and __eq__ methods.</p>
-                    <div class="pattern-layers">
-                        <div class="layer-basics">
-                            <strong>Basics:</strong> Using @dataclass removes boilerplate; each field has a declared type (x: float, size: int, etc.).
-                        </div>
-                        <div class="layer-eng">
-                            <strong>Engineering:</strong> Type safety reduces bugs when passing Cube instances between functions. Immutable-friendly design supports functional programming patterns.
-                        </div>
-                        <div class="layer-arch">
-                            <strong>Architecture:</strong> Dataclass acts as a contract: any function receiving a Cube knows exactly what fields it has. Easier to refactor or extend (e.g., add acceleration field).
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pattern-card">
-                    <h3>Separation of Concerns</h3>
-                    <p>Each function has a single responsibility: find_bigger_neighbors filters cubes, compute_flee_steering calculates direction, apply_steering modifies velocity. This makes logic testable and reusable.</p>
-                    <div class="pattern-layers">
-                        <div class="layer-basics">
-                            <strong>Basics:</strong> find_bigger_neighbors() only filters; compute_flee_steering() only computes; apply_steering() only applies. No mixing of concerns.
-                        </div>
-                        <div class="layer-eng">
-                            <strong>Engineering:</strong> Each function is small and decoupled. You can test compute_flee_steering() without rendering or physics. Easy to swap algorithms (e.g., try different steering weights).
-                        </div>
-                        <div class="layer-arch">
-                            <strong>Architecture:</strong> The update_cube() function becomes a clear pipeline: threats → steering → velocity update → position update → collision. Highly maintainable.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pattern-card">
-                    <h3>Configuration Constants at Top</h3>
-                    <p>Behavior parameters (FLEE_RADIUS, FLEE_STEER, CUBE_COUNT, FPS) are declared as module-level constants, making tuning trivial without touching function logic.</p>
-                    <div class="pattern-layers">
-                        <div class="layer-basics">
-                            <strong>Basics:</strong> Constants like FLEE_RADIUS = 140 and FLEE_STEER = 1200 are centralized. Changing one value adjusts the whole system's behavior.
-                        </div>
-                        <div class="layer-eng">
-                            <strong>Engineering:</strong> Non-developers can tweak parameters without understanding code. Supports rapid prototyping and experimentation (e.g., "What if FLEE_STEER = 2000?").
-                        </div>
-                        <div class="layer-arch">
-                            <strong>Architecture:</strong> An ideal pattern for game development and simulations. Future readers know where to look for "magic numbers." Could evolve into config files or UI sliders.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <h2 class="section-title">⚠️ 2 Potential Issues</h2>
-            <div class="two-col">
-                <div class="pattern-card">
-                    <h3><span class="issue-marker">🔴</span> O(n²) Distance Calculations</h3>
-                    <p>In find_bigger_neighbors(), every frame iterates all cubes for every cube, computing distances. With 30 cubes, that's ~900 distance calculations per frame. At 60 FPS, unscalable.</p>
-                    <div class="pattern-layers">
-                        <div class="layer-basics">
-                            <strong>Basics:</strong> In find_bigger_neighbors(), a nested loop over cubes with sqrt() distance calculation creates quadratic complexity.
-                        </div>
-                        <div class="layer-eng">
-                            <strong>Engineering:</strong> Performance degrades rapidly: 30 cubes is manageable; 100 cubes would lag. sqrt() is costly; consider squared distances for comparison or spatial partitioning (grid, quadtree).
-                        </div>
-                        <div class="layer-arch">
-                            <strong>Architecture:</strong> If this simulation is meant to scale to thousands of entities, a spatial indexing data structure (grid or quadtree) is essential. For now, document the limit and consider a TODO.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pattern-card">
-                    <h3><span class="issue-marker">🔴</span> Dead Code & Inconsistency</h3>
-                    <p>The in_radius() function duplicates distance logic but is never called. Also, velocity is randomly scaled (0.95–1.05) on bounce, causing subtle speed drift over time.</p>
-                    <div class="pattern-layers">
-                        <div class="layer-basics">
-                            <strong>Basics:</strong> in_radius() calculates distance but isn't imported or called anywhere. The random bounce factor might be unintended.
-                        </div>
-                        <div class="layer-eng">
-                            <strong>Engineering:</strong> Dead code accumulates technical debt. The random bounce factor is poorly documented—is it intentional for realism, or a bug? Unclear intent slows debugging.
-                        </div>
-                        <div class="layer-arch">
-                            <strong>Architecture:</strong> Either remove in_radius() or refactor to use it (DRY principle). Document the random bounce with a comment explaining the game design rationale.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TYPE HINTS TAB -->
-        <div id="typehints" class="tab-panel">
-            <div class="type-banner">
-                <div>Type Hint Score: <span class="score">4 / 5</span></div>
-                <div>Good coverage with minor gaps. Parameter and return annotations are present for most functions; generics are used correctly.</div>
-            </div>
-
-            <div class="two-col">
-                <div>
-                    <h3 class="section-title" style="color: #3fb950; margin-top: 0;">✅ Strengths</h3>
-                    <div class="pattern-card">
-                        <h3>Return Type Annotations Present</h3>
-                        <p>Functions like compute_flee_steering() → tuple[float, float] and find_bigger_neighbors() → list[Cube] clearly declare their return types. This aids IDE autocompletion and prevents return type surprises.</p>
-                    </div>
-                    <div class="pattern-card">
-                        <h3>Concrete Generics</h3>
-                        <p>Use of list[Cube] and tuple[int, int, int] for Color is specific and reveals intent. No bare "list" or "tuple" generics—readers know exactly what data structures hold.</p>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="section-title" style="color: #f85149; margin-top: 0;">⚠️ Gaps</h3>
-                    <div class="pattern-card">
-                        <h3>Missing Parameter Annotations</h3>
-                        <p>speed() and in_radius() lack parameter type hints. The former uses "mini" and "maxi" without types; the latter has unnamed parameters. Add float and Cube hints for clarity.</p>
-                    </div>
-                    <div class="pattern-card">
-                        <h3>Color Type Alias Underused</h3>
-                        <p>Color = tuple[int, int, int] is defined but some functions (on_cube_bounce, customize_spawn) use loose annotations. Consider propagating Color throughout for semantic clarity.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CODE REVIEW TAB -->
-        <div id="codereview" class="tab-panel">
-            <div class="review-layout">
-                <div>
-                    <h3 class="section-title" style="margin-top: 0;">Issues & Recommendations</h3>
-                    <div id="review-items"></div>
-                </div>
-                <div id="review-detail-panel">
-                    <div class="detail-title">Details</div>
-                    <div id="review-detail-content"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PERFORMANCE TAB -->
-        <div id="performance" class="tab-panel">
-            <h2 class="section-title">Performance Analysis</h2>
-            <p style="margin-bottom: 20px;">Score: <strong>3 / 6</strong> — Simulation-friendly but not optimized for scale. Main bottleneck is O(n²) neighbor distance calculations. Rendering and collision handling are efficient.</p>
-
-            <div class="two-col">
-                <div>
-                    <h3 style="color: #3fb950; margin-bottom: 12px;">🚀 Performance Wins</h3>
-                    <div class="pattern-card">
-                        <h3>Efficient Rendering</h3>
-                        <p>draw_cube() uses pygame.draw.circle() directly without expensive transformations. No per-pixel operations or shadow rendering. Blits to screen are fast.</p>
-                    </div>
-                    <div class="pattern-card">
-                        <h3>Reasonable Frame Budget</h3>
-                        <p>With 30 cubes at 60 FPS, each frame has ~16ms. Current logic (neighbor search, steering, position update) fits comfortably. Only issue at higher cube counts.</p>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 style="color: #d76800; margin-bottom: 12px;">🐢 Performance Risks</h3>
-                    <div class="pattern-card">
-                        <h3>Quadratic Neighbor Search</h3>
-                        <p>find_bigger_neighbors() iterates all cubes for each cube (O(n²)). At 30 cubes, that's manageable; at 100+, this alone will dominate frame time. sqrt() per pair adds cost.</p>
-                    </div>
-                    <div class="pattern-card">
-                        <h3>Repeated Distance Calculations</h3>
-                        <p>Center points (cx, cy) and (nx, ny) are recalculated in find_bigger_neighbors() and compute_flee_steering(). Caching them per frame would halve distance math overhead.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="badge-score">Score: 3 / 6 — Acceptable for 30-50 cubes; upgrade spatial partitioning for 100+.</div>
-        </div>
-
-        <!-- NEXT STEPS TAB -->
-        <div id="nextsteps" class="tab-panel">
-            <h2 class="section-title">📚 Resources & Next Steps</h2>
-            <div class="ns-item">
-                <h4>🎮 Pygame Documentation</h4>
-                <p>Official Pygame docs covering drawing, event handling, and surfaces. Great for extending rendering with effects or custom input.</p>
-                <a href="https://www.pygame.org/docs/" target="_blank">→ Pygame Docs</a>
-            </div>
-            <div class="ns-item">
-                <h4>🔬 Steering Behaviors</h4>
-                <p>Craig Reynolds' classic paper on flocking and steering behaviors. Includes fleeing, seeking, cohesion, and separation. Foundation for this project's algorithm.</p>
-                <a href="https://www.red3d.com/cwr/boids/" target="_blank">→ Boids & Flocking</a>
-            </div>
-            <div class="ns-item">
-                <h4>⚙️ Spatial Partitioning</h4>
-                <p>Learn about grid-based and quadtree spatial indexing to optimize O(n²) neighbor searches. Essential for scaling to 100+ entities without performance loss.</p>
-                <a href="https://en.wikipedia.org/wiki/Quadtree" target="_blank">→ Quadtree on Wikipedia</a>
-            </div>
-            <div class="ns-item">
-                <h4>🐍 Python Type Hints</h4>
-                <p>Best practices for adding type hints to Python functions. Improves IDE support, catches bugs early, and makes code self-documenting.</p>
-                <a href="https://docs.python.org/3/library/typing.html" target="_blank">→ Python typing module</a>
-            </div>
-            <div class="ns-item">
-                <h4>🔍 Code Review Strategy</h4>
-                <p>Learn how to identify dead code, refactor for clarity, and balance optimization with readability. This project is a great training ground.</p>
-                <a href="https://refactoring.guru/" target="_blank">→ Refactoring.Guru</a>
-            </div>
-        </div>
+<div id="tab-architecture" class="tab-panel active">
+  <div class="card">
+    <h3>System Diagrams</h3>
+    <div class="arch-subnav">
+      <button class="arch-btn active" onclick="switchArch('call', this)">Call Graph</button>
+      <button class="arch-btn" onclick="switchArch('deps', this)">Dependencies</button>
+      <button class="arch-btn" onclick="switchArch('fullseq', this)">Full Sequence</button>
+      <button class="arch-btn" onclick="switchArch('flee', this)">Flee Sequence</button>
+      <button class="arch-btn" onclick="switchArch('life', this)">Life Sequence</button>
+      <button class="arch-btn" onclick="switchArch('df1', this)">Flow Cubes</button>
+      <button class="arch-btn" onclick="switchArch('df2', this)">Flow Steer</button>
     </div>
 
-    <script>
-        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    <div id="arch-call" class="arch-panel active">
+      <div class="diag-title">Call Graph</div>
+      <div class="diag-container" id="diag-call_graph"></div>
+      <div class="diag-caption">Main loop triggers event work, physics updates, drawing, and display swap each frame.</div>
+    </div>
 
-        const diagrams = {
-            callgraph: String.raw`
-                graph TD
-                    main["main()"]
-                    loop["pygame loop"]
-                    update["update_cube()"]
-                    find_neighbors["find_bigger_neighbors()"]
-                    compute_steer["compute_flee_steering()"]
-                    apply_steer["apply_steering()"]
-                    draw["draw_cube()"]
-                    
-                    main --> loop
-                    loop --> update
-                    loop --> draw
-                    update --> find_neighbors
-                    update --> compute_steer
-                    update --> apply_steer
-                    find_neighbors --> update
-                    compute_steer --> apply_steer
-            `,
-            dependencies: String.raw`
-                graph LR
-                    proj["main.py"]
-                    pygame["pygame"]
-                    math["math"]
-                    random["random"]
-                    dc["dataclasses"]
-                    
-                    proj --> pygame
-                    proj --> math
-                    proj --> random
-                    proj --> dc
-            `,
-            sequence1: String.raw`
-                sequenceDiagram
-                    participant m as main
-                    participant evtloop as "Event Loop"
-                    participant upd as update_cube
-                    participant drw as draw_cube
-                    participant pygame_d as "Pygame Display"
-                    
-                    m ->> evtloop: tick, handle events
-                    evtloop ->> upd: for each cube
-                    upd -->> evtloop: cube updated
-                    evtloop ->> drw: for each cube
-                    drw -->> evtloop: drawn
-                    evtloop ->> pygame_d: flip display
-            `,
-            sequence2: String.raw`
-                sequenceDiagram
-                    participant cube as Cube
-                    participant upd as update_cube
-                    participant find as find_bigger
-                    participant steer as compute_steer
-                    participant apply as apply_steering
-                    
-                    upd ->> find: all cubes list
-                    find -->> upd: threats list
-                    upd ->> steer: threats
-                    steer -->> upd: steer_x, steer_y
-                    upd ->> apply: steering vector
-                    apply ->> cube: update vx, vy
-            `,
-            dataflow: String.raw`
-                graph TD
-                    cube["Cube state: x, y, vx, vy"]
-                    find["Filter bigger neighbors"]
-                    threats["Threats list"]
-                    steer["Compute flee steering"]
-                    steering["Steering vector: steer_x, steer_y"]
-                    apply["Apply steering vector"]
-                    vel["Updated velocity"]
-                    physics["Update position by velocity"]
-                    final["Final position"]
-                    
-                    cube --> find
-                    find --> threats
-                    threats --> steer
-                    steer --> steering
-                    steering --> apply
-                    apply --> vel
-                    vel --> physics
-                    physics --> final
-            `
-        };
+    <div id="arch-deps" class="arch-panel">
+      <div class="diag-title">Dependency Graph</div>
+      <div class="diag-container" id="diag-dependency_graph"></div>
+      <div class="diag-caption">Core file imports standard modules and pygame for math, randomness, timing, and rendering.</div>
+    </div>
 
-        const reviewItems = [
-            {
-                id: "r1",
-                title: "Distance Calculation Inconsistency",
-                severity: "medium",
-                snippet: "def in_radius(...): ...\ndef find_bigger_neighbors(...): ...",
-                shortNote: "Two functions compute distances differently; in_radius is unused.",
-                fullExplanation: "The in_radius() function calculates center-to-center distance using sqrt(), but find_bigger_neighbors() does the same logic inline. This violates DRY (Don't Repeat Yourself). If distance logic changes (e.g., squared distances for optimization), you'd need to update both places.",
-                improvementHint: "Refactor: either delete in_radius() (if unused) or call it from find_bigger_neighbors(). Consider naming the helper to emphasize it's for neighbor detection, not a generic distance function."
-            },
-            {
-                id: "r2",
-                title: "Dead Code: in_radius Function",
-                severity: "high",
-                snippet: "def in_radius(cube, radius, neighbor)-> bool:\n    ...distance check...\n    if distance <= radius:\n        return True\n    return False",
-                shortNote: "Function defined but never imported or called anywhere.",
-                fullExplanation: "The in_radius() function exists but isn't used in the codebase. Unused code accumulates technical debt: future maintainers wonder if it's meant to be used, and it obscures the actual active logic. Python doesn't warn about unused functions at runtime.",
-                improvementHint: "Action: Remove in_radius() if it's truly unused. If it was a placeholder or experiment, document why you're keeping it (e.g., # Candidate for optimization). Version control lets you recover it later if needed."
-            },
-            {
-                id: "r3",
-                title: "Random Bounce Velocity Dampening",
-                severity: "medium",
-                snippet: "cube.vx *= -1\ncube.vx *= random.randint(95,105)/100\non_cube_bounce(cube, \"left\")",
-                shortNote: "Velocity is randomly scaled after bounce, causing subtle speed drift.",
-                fullExplanation: "After wall bounce, velocity is multiplied by a random factor between 0.95 and 1.05. Over many bounces, this causes speed to drift unpredictably. It's unclear if this is intentional realism (energy loss simulation) or a bug. Without documentation, it's a maintenance risk.",
-                improvementHint: "Either: (1) Document the design rationale at the top or in a comment, or (2) Make it configurable via a constant like BOUNCE_DAMPING = 0.98. If unintended, simply remove the random factor and use a fixed damping coefficient."
-            },
-            {
-                id: "r4",
-                title: "Missing Validation in apply_steering",
-                severity: "low",
-                snippet: "def apply_steering(cube: Cube, steer_x: float, steer_y: float, dt: float) -> None:\n    if steer_x == 0 and steer_y == 0:\n        return",
-                shortNote: "No check for negative dt or steer magnitude outliers.",
-                fullExplanation: "The function assumes dt is positive and steer values are reasonable. If dt is negative (e.g., a bug in the timing code), behavior becomes unpredictable. Small robustness checks prevent cascading bugs.",
-                improvementHint: "Add a lightweight assertion: assert dt > 0, \"dt must be positive\". Or add a silent clamp: dt = max(dt, 0.001) if concerned about edge cases. For production, use try-except or logging."
-            },
-            {
-                id: "r5",
-                title: "O(n²) Neighbor Search Scalability",
-                severity: "high",
-                snippet: "for neighbor in cubes:\n    if neighbor is cube:\n        continue\n    if neighbor.size > cube.size:\n        dist = sqrt(...)",
-                shortNote: "Every cube scans all other cubes every frame; scales quadratically.",
-                fullExplanation: "In find_bigger_neighbors(), a nested loop iterates over all cubes for every cube. With 30 cubes, that's manageable (~5% frame time). With 300 cubes, it becomes ~50% of frame time. At 3000 cubes, it's essentially all of it. This is the primary bottleneck for scaling.",
-                improvementHint: "For 30–100 cubes, acceptable. To scale further: (1) Use spatial grid (divide space into cells, query only nearby cells), or (2) Use a quadtree for dynamic partitioning. Both reduce lookup from O(n²) to O(n log n) or O(n) depending on distribution."
-            }
-        ];
+    <div id="arch-fullseq" class="arch-panel">
+      <div class="diag-title">Full Frame Sequence</div>
+      <div class="diag-container" id="diag-sequence_full"></div>
+      <div class="diag-caption">Each frame advances clock, handles events, updates cubes, draws scene, then flips display.</div>
+    </div>
 
-        function escapeHtml(value) {
-            return value
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
+    <div id="arch-flee" class="arch-panel">
+      <div class="diag-title">Steering Sequence</div>
+      <div class="diag-container" id="diag-sequence_flee"></div>
+      <div class="diag-caption">A cube gathers neighbors, computes flee and chase vectors, then applies steering.</div>
+    </div>
 
-        function showTab(tabName, clickedButton) {
-            const panels = document.querySelectorAll('.tab-panel');
-            panels.forEach(p => p.classList.remove('active'));
-            const targetPanel = document.getElementById(tabName);
-            if (!targetPanel) {
-                return;
-            }
-            targetPanel.classList.add('active');
+    <div id="arch-life" class="arch-panel">
+      <div class="diag-title">Lifecycle Sequence</div>
+      <div class="diag-container" id="diag-sequence_life"></div>
+      <div class="diag-caption">A cube can be replaced after lifespan expiry to keep simulation density stable.</div>
+    </div>
 
-            const buttons = document.querySelectorAll('.tab-button');
-            buttons.forEach(b => b.classList.remove('active'));
-            const activeButton = clickedButton || document.querySelector(`.tab-button[data-tab="${tabName}"]`);
-            if (activeButton) {
-                activeButton.classList.add('active');
-            }
+    <div id="arch-df1" class="arch-panel">
+      <div class="diag-title">Data Flow Cubes</div>
+      <div class="diag-container" id="diag-dataflow_cubes"></div>
+      <div class="diag-caption">The cube list is created, iterated, updated, and finally rendered each frame.</div>
+    </div>
 
-            if (tabName === 'architecture') {
-                renderAllDiagrams();
-            }
-            if (tabName === 'codereview') {
-                populateReview();
-            }
-        }
+    <div id="arch-df2" class="arch-panel">
+      <div class="diag-title">Data Flow Steering</div>
+      <div class="diag-container" id="diag-dataflow_steer"></div>
+      <div class="diag-caption">Steering vectors are composed from flee and chase contributions before velocity changes.</div>
+    </div>
+  </div>
+</div>
 
-        function showArch(archName, clickedButton) {
-            const panels = document.querySelectorAll('.arch-panel');
-            panels.forEach(p => p.classList.remove('active'));
-            const targetPanel = document.getElementById(archName);
-            if (!targetPanel) {
-                return;
-            }
-            targetPanel.classList.add('active');
+<div id="tab-patterns" class="tab-panel">
+  <div class="two-col">
+    <div>
+      <h3 class="section-head green">Good Patterns</h3>
 
-            const buttons = document.querySelectorAll('.arch-subbutton');
-            buttons.forEach(b => b.classList.remove('active'));
-            const activeButton = clickedButton || document.querySelector(`.arch-subbutton[data-arch="${archName}"]`);
-            if (activeButton) {
-                activeButton.classList.add('active');
-            }
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">✅</span><span class="pattern-title">Clear Data Model</span></div>
+        <p class="pattern-desc">The Cube dataclass groups simulation state into one readable object used across systems.</p>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics</span>Related values live in one place.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight</span>Passing one object lowers argument clutter.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight</span>Shared shape helps future systems interoperate cleanly.</div>
+        </div>
+        <a class="ext-link" href="https://docs.python.org/3/library/dataclasses.html" target="_blank" rel="noreferrer">Learn: dataclasses</a>
+      </div>
 
-            renderAllDiagrams();
-        }
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">✅</span><span class="pattern-title">Separated Update Pipeline</span></div>
+        <p class="pattern-desc">Motion logic is split into find, classify, steer, apply, and bounce steps with small functions.</p>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics</span>Small functions are easier to test and read.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight</span>Step boundaries make bugs easier to isolate.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight</span>Pipeline style supports replacing behavior modules later.</div>
+        </div>
+        <a class="ext-link" href="https://refactoring.guru/smells/long-method" target="_blank" rel="noreferrer">Learn: function decomposition</a>
+      </div>
 
-        async function renderAllDiagrams() {
-            for (const [key, source] of Object.entries(diagrams)) {
-                const containerId = `diag-${key}`;
-                const container = document.getElementById(containerId);
-                if (!container || !container.offsetParent) continue;
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">✅</span><span class="pattern-title">Frame Rate Hygiene</span></div>
+        <p class="pattern-desc">Delta time updates and smoothed FPS display reduce visual noise and improve timing readability.</p>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics</span>Time based motion stays stable across machines.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight</span>Smoothing prevents flickering diagnostics in HUD.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight</span>Deterministic timing improves reproducibility of behavior tuning.</div>
+        </div>
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Moving_average" target="_blank" rel="noreferrer">Learn: moving average</a>
+      </div>
+    </div>
 
-                try {
-                    const uniqueId = `mermaid-${key}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
-                    const { svg } = await mermaid.render(uniqueId, source);
-                    container.innerHTML = svg;
-                } catch (err) {
-                    container.innerHTML = `<div class="mermaid-error">Error rendering diagram.\n${escapeHtml(String(err))}\n\nSource:\n${escapeHtml(source)}</div>`;
-                }
-            }
-        }
+    <div>
+      <h3 class="section-head yellow">Potential Issues</h3>
 
-        function populateReview() {
-            const container = document.getElementById('review-items');
-            if (!container) {
-                return;
-            }
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">⚠️</span><span class="pattern-title">Neighbor Scan Cost</span></div>
+        <p class="pattern-desc">Every cube scans every other cube each frame, producing quadratic work as count increases.</p>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics</span>More cubes can slow the game quickly.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight</span>Nested loops dominate runtime in dense scenes.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight</span>Spatial partitioning can bound local search cost.</div>
+        </div>
+        <div class="fix-hint">Hint: grid buckets or quadtree can reduce neighbor candidates per cube.</div>
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Quadtree" target="_blank" rel="noreferrer">Learn: quadtree</a>
+      </div>
 
-            container.innerHTML = reviewItems.map((item, idx) => `
-                <div class="review-item ${idx === 0 ? 'active' : ''}" onclick="selectReview(${idx})">
-                    <div class="review-item-title">${item.title}</div>
-                    <span class="review-item-severity severity-${item.severity}">${item.severity.toUpperCase()}</span>
-                </div>
-            `).join('');
+      <div class="pattern-card">
+        <div class="pattern-header"><span class="pattern-icon">⚠️</span><span class="pattern-title">Loose Type Coverage</span></div>
+        <p class="pattern-desc">A few signatures and return values are inconsistent with annotations, reducing static checking value.</p>
+        <div class="pattern-layers">
+          <div class="layer layer-basics"><span class="layer-label">Basics</span>Type hints are most useful when complete.</div>
+          <div class="layer layer-eng"><span class="layer-label">Engineering Insight</span>Mismatch hides bugs from tools and reviewers.</div>
+          <div class="layer layer-arch"><span class="layer-label">Architecture Insight</span>Consistent contracts improve cross module integration safety.</div>
+        </div>
+        <div class="fix-hint">Hint: annotate untyped params and align function returns with declared signatures.</div>
+        <a class="ext-link" href="https://docs.python.org/3/library/typing.html" target="_blank" rel="noreferrer">Learn: typing module</a>
+      </div>
+    </div>
+  </div>
+</div>
 
-            if (reviewItems.length > 0) {
-                selectReview(0);
-            }
-        }
+<div id="tab-typehints" class="tab-panel">
+  <div class="type-banner">
+    <div class="score-big">4 / 5</div>
+    <div class="score-verdict">Strong type hint usage overall with a few contract gaps to tighten.</div>
+  </div>
 
-        function selectReview(idx) {
-            if (idx < 0 || idx >= reviewItems.length) {
-                return;
-            }
+  <div class="two-col">
+    <div class="card">
+      <h3>Strengths</h3>
+      <div class="pattern-card">
+        <div class="pattern-title">Annotated Data Model</div>
+        <div class="pattern-desc">Cube fields use explicit scalar and tuple types.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-title">Concrete Generic Types</div>
+        <div class="pattern-desc">Lists and tuples like list[Cube] and tuple[float, float] are used clearly.</div>
+      </div>
+    </div>
 
-            const items = document.querySelectorAll('.review-item');
-            items.forEach(i => i.classList.remove('active'));
-            if (items[idx]) {
-                items[idx].classList.add('active');
-            }
+    <div class="card">
+      <h3>Gaps</h3>
+      <div class="pattern-card">
+        <div class="pattern-title">Missing Parameter Type</div>
+        <div class="pattern-desc">find_neighbors uses an untyped cube parameter instead of cube: Cube.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-title">Return Type Mismatch</div>
+        <div class="pattern-desc">load_music is annotated as None but returns None explicitly in an exception branch.</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-            const item = reviewItems[idx];
-            const panel = document.getElementById('review-detail-panel');
-            if (!panel) {
-                return;
-            }
+<div id="tab-codereview" class="tab-panel">
+  <div class="review-layout">
+    <div class="review-left">
+      <div id="ri-0" class="review-item" onclick="selectReview(0)">
+        <div class="ri-titlerow"><span class="ri-title">Quadratic neighbor search</span><span class="badge badge-medium">medium</span></div>
+        <div class="ri-note">Per frame scaling risk with larger populations.</div>
+      </div>
+      <div id="ri-1" class="review-item" onclick="selectReview(1)">
+        <div class="ri-titlerow"><span class="ri-title">Unsigned flee weight</span><span class="badge badge-medium">medium</span></div>
+        <div class="ri-note">Negative weight can invert steering in edge cases.</div>
+      </div>
+      <div id="ri-2" class="review-item" onclick="selectReview(2)">
+        <div class="ri-titlerow"><span class="ri-title">Unused player factory</span><span class="badge badge-low">low</span></div>
+        <div class="ri-note">Dead path adds maintenance noise.</div>
+      </div>
+      <div id="ri-3" class="review-item" onclick="selectReview(3)">
+        <div class="ri-titlerow"><span class="ri-title">Type annotation mismatch</span><span class="badge badge-low">low</span></div>
+        <div class="ri-note">Function contracts are not fully consistent.</div>
+      </div>
+      <div id="ri-4" class="review-item" onclick="selectReview(4)">
+        <div class="ri-titlerow"><span class="ri-title">Respawn logic coupling</span><span class="badge badge-medium">medium</span></div>
+        <div class="ri-note">Lifecycle reset bypasses customization hook.</div>
+      </div>
+    </div>
 
-            panel.innerHTML = `
-                <div class="detail-title">${item.title}</div>
-                <div class="detail-section">
-                    <div class="detail-label">Severity</div>
-                    <span class="review-item-severity severity-${item.severity}">${item.severity.toUpperCase()}</span>
-                </div>
-                <div class="detail-section">
-                    <div class="detail-label">Code Snippet</div>
-                    <div class="code-snippet">${item.snippet.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-                </div>
-                <div class="detail-section">
-                    <div class="detail-label">Explanation</div>
-                    <p>${item.fullExplanation}</p>
-                </div>
-                <div class="detail-section">
-                    <div class="detail-label">Recommendation</div>
-                    <p>${item.improvementHint}</p>
-                </div>
-            `;
-        }
+    <div class="review-right" id="review-detail-panel"></div>
+  </div>
+</div>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            populateReview();
-            renderAllDiagrams();
-        });
-    </script>
+<div id="tab-performance" class="tab-panel">
+  <div class="two-col">
+    <div class="card">
+      <h3 class="section-head green">Wins</h3>
+      <div class="perf-card">
+        <div class="perf-title">Time based movement</div>
+        <div class="perf-desc">Using dt makes motion stable across frame variance and avoids frame bound speed artifacts.</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-title">Smoothed HUD metric</div>
+        <div class="perf-desc">Displayed FPS uses weighted smoothing, reducing readout jitter while preserving trends.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-head red">Risks</h3>
+      <div class="perf-card">
+        <div class="perf-title">All pairs neighbor checks</div>
+        <div class="perf-desc">update_cube calls find_neighbors for every cube, leading to O(n^2) distance checks per frame.</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-title">Heavy sqrt usage</div>
+        <div class="perf-desc">Distance math repeatedly computes square roots in steering and neighbor scans.</div>
+      </div>
+    </div>
+  </div>
+  <div class="badge-score">Performance score: 3 / 6 - Good structure, but neighbor search is the main scaling limit.</div>
+</div>
+
+<div id="tab-nextsteps" class="tab-panel">
+  <div class="card">
+    <div class="ns-item">
+      <div class="ns-num">1</div>
+      <div class="ns-text">
+        <a href="https://www.pygame.org/docs/" target="_blank" rel="noreferrer">Pygame documentation</a>
+        <div class="ns-desc">Review timing, drawing, and mixer behavior for cleaner game loop control.</div>
+      </div>
+    </div>
+    <div class="ns-item">
+      <div class="ns-num">2</div>
+      <div class="ns-text">
+        <a href="https://docs.python.org/3/library/dataclasses.html" target="_blank" rel="noreferrer">Python dataclasses</a>
+        <div class="ns-desc">Strengthen model design choices and immutable pattern opportunities.</div>
+      </div>
+    </div>
+    <div class="ns-item">
+      <div class="ns-num">3</div>
+      <div class="ns-text">
+        <a href="https://docs.python.org/3/library/typing.html" target="_blank" rel="noreferrer">Python typing</a>
+        <div class="ns-desc">Tighten type contracts and improve static checks for simulation helpers.</div>
+      </div>
+    </div>
+    <div class="ns-item">
+      <div class="ns-num">4</div>
+      <div class="ns-text">
+        <a href="https://en.wikipedia.org/wiki/Boids" target="_blank" rel="noreferrer">Boids behavior model</a>
+        <div class="ns-desc">Explore richer emergent motion by extending chase and flee rules.</div>
+      </div>
+    </div>
+    <div class="ns-item">
+      <div class="ns-num">5</div>
+      <div class="ns-text">
+        <a href="https://refactoring.guru/smells/long-method" target="_blank" rel="noreferrer">Refactoring long methods</a>
+        <div class="ns-desc">Keep update logic modular as new mechanics are added.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tab switching ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Architecture sub-tabs ──
+function switchArch(name, btn) {
+  document.querySelectorAll('.arch-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.arch-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('arch-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Code Review ──
+const reviewItems = [
+  {
+    id: 0,
+    title: 'Quadratic neighbor search',
+    severity: 'medium',
+    snippet: 'for i in range(len(cubes)):\n    update_cube(cubes[i], dt, cubes)\n\n# in update_cube\nneighbors = find_neighbors(cube, cubes, FLEE_RADIUS)',
+    shortNote: 'Per frame scaling risk with larger populations.',
+    fullExplanation: 'The current design runs a full neighbor scan for each cube every frame.\nAs cube count grows, distance checks grow quadratically and can reduce frame stability.',
+    improvementHint: 'Introduce a spatial grid to search nearby buckets instead of scanning all cubes.'
+  },
+  {
+    id: 1,
+    title: 'Unsigned flee weight',
+    severity: 'medium',
+    snippet: 'weight = (FLEE_RADIUS - dist) / FLEE_RADIUS\nsteer_x += (dx / dist) * weight',
+    shortNote: 'Negative weight can invert steering in edge cases.',
+    fullExplanation: 'Flee weight is computed without clamping to non negative values.\nIf threat filtering changes later, distances over radius can produce negative contribution and surprising pulls.',
+    improvementHint: 'Clamp with max(0.0, weight) before accumulating steer components.'
+  },
+  {
+    id: 2,
+    title: 'Unused player factory',
+    severity: 'low',
+    snippet: 'def create_player() -> Cube:\n    ...\n    lifespan = 4096',
+    shortNote: 'Dead path adds maintenance noise.',
+    fullExplanation: 'create_player is defined but not integrated into main flow.\nUnused features increase cognitive load and may drift from real behavior over time.',
+    improvementHint: 'Either wire create_player into gameplay or remove it until needed.'
+  },
+  {
+    id: 3,
+    title: 'Type annotation mismatch',
+    severity: 'low',
+    snippet: 'def find_neighbors(cube, cubes: list[Cube], radius: float) -> list[Cube]:\n    ...\n\ndef load_music(filename:str)->None:\n    ...\n    return None',
+    shortNote: 'Function contracts are not fully consistent.',
+    fullExplanation: 'One parameter in find_neighbors is untyped, and load_music returns None explicitly while annotated as None only.\nThese small mismatches reduce static analysis precision.',
+    improvementHint: 'Annotate cube as Cube and keep return paths aligned with declared signature.'
+  },
+  {
+    id: 4,
+    title: 'Respawn logic coupling',
+    severity: 'medium',
+    snippet: 'if to_kill.lifespan and ct > to_kill.death:\n    to_kill = create_cube()',
+    shortNote: 'Lifecycle reset bypasses customization hook.',
+    fullExplanation: 'Respawn replaces expired cubes directly through create_cube.\nThis bypasses customize_spawn used during initial spawn, causing inconsistent behavior between initial and replacement entities.',
+    improvementHint: 'Call customize_spawn(create_cube()) inside check_kill to keep spawn policy consistent.'
+  }
+];
+
+function escH(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function selectReview(id) {
+  document.querySelectorAll('.review-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('ri-' + id).classList.add('selected');
+  const item = reviewItems[id];
+  const sevClass = 'badge-' + item.severity;
+  const body = item.fullExplanation.replace(/\n/g, '<br>');
+  document.getElementById('review-detail-panel').innerHTML = `
+    <div>
+      <div class="detail-head">
+        <span class="detail-title">${escH(item.title)}</span>
+        <span class="badge ${escH(sevClass)}">${escH(item.severity)}</span>
+      </div>
+      <div class="detail-body">${body}</div>
+      <pre class="snippet">${escH(item.snippet)}</pre>
+      <div class="hint-box">&#128161; <strong>Improvement:</strong> ${escH(item.improvementHint)}</div>
+    </div>`;
+}
+
+// ── Mermaid ──
+mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+
+const diagrams = {
+  call_graph: String.raw`graph TD
+    n1[main loop start] --> n2[event input pass]
+    n2 --> n3[update cube list]
+    n3 --> n4[draw cube list]
+    n4 --> n5[draw hud text]
+    n5 --> n6[flip display frame]
+
+    n3 --> n7[update cube one]
+    n7 --> n8[find near cubes]
+    n8 --> n9[split threat target]
+    n9 --> n10[compute flee steer]
+    n9 --> n11[compute chase steer]
+    n10 --> n12[apply steer speed]
+    n11 --> n12
+    n12 --> n13[move and bounce]
+    n13 --> n14[check life reset]
+  `,
+
+  dependency_graph: String.raw`graph LR
+    n1[main py file] --> n2[random module]
+    n1 --> n3[time module]
+    n1 --> n4[math module]
+    n1 --> n5[dataclass module]
+    n1 --> n6[pygame module]
+
+    click n2 href "https://docs.python.org/3/library/random.html" "Open docs"
+    click n3 href "https://docs.python.org/3/library/time.html" "Open docs"
+    click n4 href "https://docs.python.org/3/library/math.html" "Open docs"
+    click n5 href "https://docs.python.org/3/library/dataclasses.html" "Open docs"
+    click n6 href "https://www.pygame.org/docs/" "Open docs"
+  `,
+
+  sequence_full: String.raw`sequenceDiagram
+    participant p1 as Main
+    participant p2 as Clock
+    participant p3 as Input
+    participant p4 as Update
+    participant p5 as Draw
+    participant p6 as Screen
+
+    p1 ->> p2: tick frame dt
+    p2 -->> p1: dt value
+    p1 ->> p3: poll all events
+    p3 -->> p1: event list
+    p1 ->> p4: update all cubes
+    p4 -->> p1: cubes advanced
+    p1 ->> p5: draw cubes hud
+    p5 ->> p6: submit draw calls
+    p6 -->> p1: frame shown
+  `,
+
+  sequence_flee: String.raw`sequenceDiagram
+    participant p1 as Update
+    participant p2 as NearScan
+    participant p3 as Compare
+    participant p4 as Flee
+    participant p5 as Chase
+    participant p6 as Apply
+
+    p1 ->> p2: find nearby cubes
+    p2 -->> p1: neighbor list
+    p1 ->> p3: split threat target
+    p3 -->> p1: threats targets
+    p1 ->> p4: make flee vector
+    p4 -->> p1: flee steer
+    p1 ->> p5: make chase vector
+    p5 -->> p1: chase steer
+    p1 ->> p6: apply final steer
+    p6 -->> p1: velocity updated
+  `,
+
+  sequence_life: String.raw`sequenceDiagram
+    participant p1 as Main
+    participant p2 as Update
+    participant p3 as Life
+    participant p4 as Spawn
+
+    p1 ->> p2: update one cube
+    p2 -->> p1: moved cube
+    p1 ->> p3: check life timer
+    p3 ->> p3: compare now death
+    p3 ->> p4: build new cube
+    p4 -->> p3: replacement cube
+    p3 -->> p1: active cube
+  `,
+
+  dataflow_cubes: String.raw`graph TD
+    n1[make cube list] --> n2[store in cubes]
+    n2 --> n3[loop each index]
+    n3 --> n4[update cube state]
+    n4 --> n5[check life reset]
+    n5 --> n6[draw each cube]
+    n6 --> n7[display frame end]
+  `,
+
+  dataflow_steer: String.raw`graph TD
+    n1[start with neighbors] --> n2[split threat target]
+    n2 --> n3[build flee vector]
+    n2 --> n4[build chase vector]
+    n3 --> n5[sum steer vector]
+    n4 --> n5
+    n5 --> n6[apply steer change]
+    n6 --> n7[normalize move speed]
+  `
+};
+
+let renderCounter = 0;
+
+async function renderDiagram(key, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const source = diagrams[key];
+  if (!source) { container.innerHTML = '<p style="color:var(--muted)">No diagram source found.</p>'; return; }
+  const uid = 'mmd-' + key + '-' + (++renderCounter);
+  try {
+    const { svg, bindFunctions } = await mermaid.render(uid, source);
+    container.innerHTML = svg;
+    if (typeof bindFunctions === 'function') bindFunctions(container);
+  } catch (err) {
+    container.innerHTML = '<pre class="fallback">Render failed: ' + err.message + '\n\nSource:\n' + source + '</pre>';
+  }
+}
+
+async function renderAll() {
+  for (const [key] of Object.entries(diagrams)) {
+    await renderDiagram(key, 'diag-' + key);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  selectReview(0);
+  renderAll();
+});
+</script>
 </body>
 </html>
