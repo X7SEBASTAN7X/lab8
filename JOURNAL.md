@@ -245,3 +245,19 @@
 - **Hook Version**: 1.02
 - **Date**: 27-04-2026 14:17
 - **Prompt**: generate the architerture documents for this projects
+
+### **New Interaction**
+- **Agent Version**: 2.3
+- **Date**: 27-04-2026 14:20
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: generate the architerture documents for this projects
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.3-Codex
+- **Socratic Mode**: ON
+- **Changes Made**: Created docs/architecture.md and docs/architecture.html with Mermaid module dependency, runtime flow, function call graph, and primary execution sequence diagrams.
+- **Context and Reasons for Changes**: User requested architecture documentation for the current project; diagrams were derived directly from main.py control flow and function relationships.
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 27-04-2026 14:21
+- **Prompt**: High-Level Runtime Flow Syntax error in text mermaid version 11.14.0 Core frame loop branches on quit and respawn controls, then updates and renders.
