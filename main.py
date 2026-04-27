@@ -11,19 +11,21 @@ WINDOW_HEIGHT = 720
 BACKGROUND_COLOR = (20, 24, 30)
 FPS = 60
 
-CUBE_COUNT = 15
+CUBE_COUNT = 20
 CUBE_MIN_SIZE = 10
 CUBE_MAX_SIZE = 75
 CUBE_MIN_SPEED = 20
 CUBE_MAX_SPEED = 200
 
-FLEE_RADIUS = 140
+
+#S
+ANALYSIS_RADIUS = 100
 FLEE_STEER = 1200
 
 CHASE_STEER = 800
 
 #Lifespan
-LIFESPAN_MIN = 20
+LIFESPAN_MIN = 15
 LIFESPAN_MAX = 60
 
 #Random Bouncing
@@ -130,8 +132,8 @@ def compute_chase_steering(cube: Cube, target: Cube, steer_strength: float) -> t
 def compute_flee_steering(cube: Cube, threats: list[Cube], steer_strength: float) -> tuple[float, float]:
     """Stub: compute steering vector that points away from nearby threats."""
     _ = (cube, threats, steer_strength)
-    # TODO Step 2: build an "away" direction for each threat and combine them.
-    # TODO Step 2: scale the final vector by steer_strength.
+    #Step 2: build an "away" direction for each threat and combine them.
+    # Step 2: scale the final vector by steer_strength.
     if not threats:
         return 0.0, 0.0
 
@@ -145,7 +147,7 @@ def compute_flee_steering(cube: Cube, threats: list[Cube], steer_strength: float
         dist = sqrt(dx**2 + dy**2)
         
         if dist > 0:
-            weight = (FLEE_RADIUS - dist) / FLEE_RADIUS # To now how urgent it is
+            weight = (ANALYSIS_RADIUS - dist) / ANALYSIS_RADIUS # To now how urgent it is
             steer_x += (dx / dist) * max(0.0, weight) 
             steer_y += (dy / dist) * max(0.0, weight) 
 
@@ -160,8 +162,8 @@ def compute_flee_steering(cube: Cube, threats: list[Cube], steer_strength: float
 def apply_steering(cube: Cube, steer_x: float, steer_y: float, dt: float) -> None:
     """Stub: apply steering to velocity while preserving your speed policy."""
     _ = (cube, steer_x, steer_y, dt)
-    # TODO Step 3: add steering to cube.vx / cube.vy.
-    # TODO Step 3: clamp resulting speed if needed.
+    # Step 3: add steering to cube.vx / cube.vy.
+    # Step 3: clamp resulting speed if needed.
     if steer_x == 0 and steer_y == 0:
         return
 
@@ -178,7 +180,7 @@ def apply_steering(cube: Cube, steer_x: float, steer_y: float, dt: float) -> Non
 
 def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
     #Make it flee
-    neighbors = find_neighbors(cube, cubes, FLEE_RADIUS)
+    neighbors = find_neighbors(cube, cubes, ANALYSIS_RADIUS)
 
     threats, targets = compare_neighbors(cube, neighbors)
     target = single_target(targets)
@@ -215,7 +217,7 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
     elif cube.y + cube.size >= WINDOW_HEIGHT:
         cube.y = WINDOW_HEIGHT - cube.size
         cube.vy *= -1
-        cube.vy *= random.uniform(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
+        cube.vy *= random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
         on_cube_bounce(cube, "bottom")
 
 
