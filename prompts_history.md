@@ -81,3 +81,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 27-04-2026 13:42
 - **Prompt**: Analyze /Users/seb1s/Documents/GitHub/lab8/main.py and generate an updated code explorer HTML using /Users/seb1s/Documents/GitHub/lab8/.github/agents/code-explorer-template.html as the blueprint. Fill all slots with current analysis from main.py, include required diagrams and sections, and write to /Users/seb1s/Documents/GitHub/lab8/docs/code_explorer.html. Then also create/update a dated copy at /Users/seb1s/Documents/GitHub/lab8/docs/code_explorer_2026-04-27.html with identical content. Ensure Mermaid diagram IDs are safe/opaque and rendering uses the template JS conventions. Do not modify main.py.
 
+### 27-04-2026 14:14
+- **Prompt**: activate the architecture-graphs agent
+

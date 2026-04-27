@@ -209,3 +209,18 @@
 - **Socratic Mode**: ON
 - **Changes Made**: Updated docs/code_explorer.html with a refreshed code explorer draft based on main.py analysis, including architecture diagrams, patterns, type-hints review, code-review items, performance tab, and resources.
 - **Context and Reasons for Changes**: User requested a full template-driven explorer regeneration from main.py and a dated copy for 2026-04-27. Iterative rewrites were performed to enforce Mermaid-safe IDs and template JS rendering conventions.
+### **New Interaction**
+- **Agent Version**: 2.3
+- **Date**: 27-04-2026 14:20
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: @file:code-explorer.agent.md generate a #file:code-explorer-template.html with the latest stuff in #file:main.py and put it on code_explorer and todays date
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: GPT-5.3-Codex
+- **Socratic Mode**: ON
+- **Changes Made**: Cleaned docs/code_explorer.html to a single valid HTML document and overwrote docs/code_explorer_2026-04-27.html with an exact copy of that cleaned output.
+- **Context and Reasons for Changes**: Initial generation introduced repeated appended HTML document blocks in docs/code_explorer.html. A final extraction-and-rewrite pass ensured one doctype/body per file and produced a stable dated artifact for today.
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 27-04-2026 14:14
+- **Prompt**: activate the architecture-graphs agent
