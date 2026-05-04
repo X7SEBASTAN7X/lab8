@@ -25,3 +25,7 @@ Implemented in line:280
 1. Instead of modifying direction, just reset the x or y by: 0 or the sreen size (adjusting by cube size to avoid bugs)
 
 Commented old solution, new avalailable on lines:275-284
+
+This implementation deprecates the following functions:
+- apply_bounce_damping()
+- on_cube_bounce()
