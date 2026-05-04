@@ -29,3 +29,8 @@ Commented old solution, new avalailable on lines:275-284
 This implementation deprecates the following functions:
 - apply_bounce_damping()
 - on_cube_bounce()
+
+
+## EXERCISE 4 - Collission detection
+- Decision: Copied the neighbor search and adjusted to what i think is correct
+line:333

@@ -35,6 +35,9 @@ LIFESPAN_MAX = 60
 #Random Bouncing
 BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX = 95,105
 
+RECT_CUBES: list = []
+
+
 Color = tuple[int, int, int]
 
 
@@ -98,6 +101,7 @@ def find_neighbors(cube: Cube, cubes: list[Cube], radius_sq: float)-> list[Cube]
     # Squared-distance checks avoid sqrt() in this per-frame hot loop.
     cx, cy = cube.x + cube.size / 2, cube.y + cube.size / 2
     for neighbor in cubes:
+
         if neighbor is cube:
             continue
         nx, ny = neighbor.x + neighbor.size / 2, neighbor.y + neighbor.size / 2
@@ -117,6 +121,7 @@ def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> tuple[list[Cube], li
     """
     threats, targets = [], []
     for neighbor in neighbors:
+
         if neighbor.size > cube.size:
             threats.append(neighbor)
         elif neighbor.size < cube.size:
@@ -228,8 +233,8 @@ def apply_bounce_damping(velocity: float) -> float:
 
 
 def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
-    # Per-frame update for a single cube:
-    # 1) Find neighbors and classify them as threats/targets.
+    # Per-frame update for a single cubes
+    # 1) Find neighbors and classify them as threats/targets. 
     neighbors = find_neighbors(cube, cubes, ANALYSIS_RADIUS_SQ)
 
     threats, targets = compare_neighbors(cube, neighbors)
@@ -297,8 +302,9 @@ def draw_cube(surface: pygame.Surface, cube: Cube) -> None:
     # (Original rect-based code is left as a comment for reference.)
     # rect = pygame.Rect(int(cube.x), int(cube.y), cube.size, cube.size)
     # pygame.draw.rect(surface, cube.color, rect, border_radius=4)
+    # return rect
 
-    # # 1. Calculate the center point
+    # 1. Calculate the center point
     center_x = int(cube.x + cube.size / 2)
     center_y = int(cube.y + cube.size / 2)
     radius = int(cube.size / 2)
@@ -323,6 +329,20 @@ def load_music(filename:str)->None:
         pygame.mixer.music.play(-1)
     except FileNotFoundError:
         print(f'File not found: {filename}')
+
+def check_collision(cube: Cube, neighbor: Cube)-> bool:
+    cx = int(cube.x + cube.size / 2)
+    cy = int(cube.y + cube.size / 2)
+    radius = int(cube.size / 2)
+    if neighbor is Cube:
+        nx, ny = neighbor.x + neighbor.size / 2, neighbor.y + neighbor.size / 2
+        dx = cx - nx
+        dy = cy - ny
+        # Compare squared distance to avoid computing square roots.
+        if dx * dx + dy * dy <= radius**2:
+            return True
+        return False
+    return False
 
 
 def main() -> None:
@@ -366,8 +386,9 @@ def main() -> None:
 
         # Render pass: background, all cubes, HUD, then flip display
         screen.fill(BACKGROUND_COLOR)
-        for cube in cubes:
-            draw_cube(screen, cube)
+        for i in range(len(cubes)):
+            draw_cube(screen, cubes[i])
+
         draw_hud(screen, font, len(cubes), displayed_fps)
         pygame.display.flip()
 
