@@ -34,6 +34,7 @@ BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX = 95,105
 
 Color = tuple[int, int, int]
 
+
 @dataclass
 class Cube:
     x: float
@@ -45,6 +46,8 @@ class Cube:
     lifespan: float
     death: float
 
+
+# Return a bright RGB color tuple so cubes contrast the dark background.
 def random_color() -> Color:
     # Keep colors bright enough to stand out from the dark background.
     return (
@@ -53,8 +56,10 @@ def random_color() -> Color:
         random.randint(70, 255),
     )
 
+
 def create_random_cube(lifespan: float) -> Cube:
-    # Shared spawn setup keeps cube/player creation in one maintainable place.
+    # Shared spawn setup: choose size and position, pick a velocity
+    # consistent with the size-based speed policy, and compute death time.
     size = random.randint(CUBE_MIN_SIZE, CUBE_MAX_SIZE)
     x = random.uniform(0, WINDOW_WIDTH - size)
     y = random.uniform(0, WINDOW_HEIGHT - size)
@@ -63,20 +68,31 @@ def create_random_cube(lifespan: float) -> Cube:
     death = time.time() + lifespan
     return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan, death=death)
 
+
 def create_cube() -> Cube:
+    # Create a cube with a random lifespan within configured bounds.
     lifespan = random.randint(LIFESPAN_MIN, LIFESPAN_MAX)
     return create_random_cube(lifespan)
 
+
 def create_player() -> Cube:
+    # Create a long-lived cube used as a 'player' placeholder.
     return create_random_cube(4096)
 
+
 def speed(size: int, mini: int, maxi: int) -> float:
+    # Map size to a speed value: smaller cubes are faster. This uses
+    # linear interpolation between `mini` and `maxi` based on size.
     return maxi - ((size - CUBE_MIN_SIZE) / (CUBE_MAX_SIZE - CUBE_MIN_SIZE)) * (maxi - mini)
+
 
 def on_cube_bounce(cube: Cube, wall: str) -> None:
     """Stub hook: react to wall collisions (sound, score, effects, etc.)."""
     _ = (cube, wall)
+
+
 def find_neighbors(cube: Cube, cubes: list[Cube], radius_sq: float)-> list[Cube]:
+    # Find cubes whose center is within `radius_sq` of `cube` center.
     close = []
     # Squared-distance checks avoid sqrt() in this per-frame hot loop.
     cx, cy = cube.x + cube.size / 2, cube.y + cube.size / 2
@@ -86,12 +102,18 @@ def find_neighbors(cube: Cube, cubes: list[Cube], radius_sq: float)-> list[Cube]
         nx, ny = neighbor.x + neighbor.size / 2, neighbor.y + neighbor.size / 2
         dx = cx - nx
         dy = cy - ny
+        # Compare squared distance to avoid computing square roots.
         if dx * dx + dy * dy <= radius_sq:
             close.append(neighbor)
     return close
 
+
 def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> tuple[list[Cube], list[Cube]]:
-    """Stub: return bigger cubes near the current cube."""
+    """Classify neighbors into threats (larger) and targets (smaller).
+
+    A 'threat' is any neighbor strictly larger than `cube`; a 'target'
+    is any neighbor strictly smaller. Equal-sized neighbors are ignored.
+    """
     threats, targets = [], []
     for neighbor in neighbors:
         if neighbor.size > cube.size:
@@ -100,7 +122,9 @@ def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> tuple[list[Cube], li
             targets.append(neighbor)
     return threats, targets
 
+
 def single_target(targets: list[Cube])-> Cube | None:
+    # Choose a single target (the smallest) to chase, or None.
     if not targets:
         return None
     smallest = targets[0]
@@ -110,7 +134,10 @@ def single_target(targets: list[Cube])-> Cube | None:
             smallest = candidate
     return smallest
 
+
 def compute_chase_steering(cube: Cube, target: Cube, steer_strength: float) -> tuple[float, float]:
+    # Compute a steering vector pointing from `cube` toward `target` and
+    # scaled by `steer_strength`.
     if not target:
         return 0.0, 0.0
 
@@ -121,16 +148,21 @@ def compute_chase_steering(cube: Cube, target: Cube, steer_strength: float) -> t
     dist_sq = dx * dx + dy * dy
 
     if dist_sq > 0:
-        # Reuse one computed length for normalization instead of recomputing.
+        # Reuse the computed length for normalization instead of recomputing.
         dist = sqrt(dist_sq)
         return (dx / dist) * steer_strength, (dy / dist) * steer_strength
     return 0.0, 0.0
 
+
 def compute_flee_steering(cube: Cube, threats: list[Cube], steer_strength: float) -> tuple[float, float]:
-    """Stub: compute steering vector that points away from nearby threats."""
+    """Compute a steering vector that points away from nearby threats.
+
+    For each threat we compute a unit vector pointing away, weight it by
+    proximity (closer threats have higher weight), sum the contributions,
+    normalize, and scale by `steer_strength`.
+    """
     _ = (cube, threats, steer_strength)
-    #Step 2: build an "away" direction for each threat and combine them.
-    # Step 2: scale the final vector by steer_strength.
+    # Early-out when there are no threats.
     if not threats:
         return 0.0, 0.0
 
@@ -139,44 +171,54 @@ def compute_flee_steering(cube: Cube, threats: list[Cube], steer_strength: float
     analysis_radius = ANALYSIS_RADIUS
     cx, cy = cube.x + cube.size / 2, cube.y + cube.size / 2
 
+    # Accumulate weighted away vectors from each threat.
     for threat in threats:
         nx, ny = threat.x + threat.size / 2, threat.y + threat.size / 2
-        
-        dx, dy = cx - nx, cy - ny # Get a vector between the cube and the threat
+        dx, dy = cx - nx, cy - ny  # Vector from threat to cube
         dist_sq = dx * dx + dy * dy
-        
+
         if dist_sq > 0:
             dist = sqrt(dist_sq)
-            weight = (analysis_radius - dist) / analysis_radius # To now how urgent it is
-            steer_x += (dx / dist) * max(0.0, weight) 
-            steer_y += (dy / dist) * max(0.0, weight) 
+            # Weight in [0,1) based on how close the threat is within analysis radius
+            weight = (analysis_radius - dist) / analysis_radius
+            steer_x += (dx / dist) * max(0.0, weight)
+            steer_y += (dy / dist) * max(0.0, weight)
 
+    # Normalize the combined vector and scale by steering strength.
     total_dist_sq = steer_x * steer_x + steer_y * steer_y
     if total_dist_sq > 0:
         total_dist = sqrt(total_dist_sq)
-    # Normalize and multiply by the strength to make it look more or less intentional
-        return (steer_x / total_dist ) * steer_strength, (steer_y / total_dist) * steer_strength
-    
+        return (steer_x / total_dist) * steer_strength, (steer_y / total_dist) * steer_strength
+
     return 0.0, 0.0
 
 
 def apply_steering(cube: Cube, steer_x: float, steer_y: float, dt: float) -> None:
-    """Stub: apply steering to velocity while preserving your speed policy."""
+    """Apply steering to velocity while preserving the original speed magnitude.
+
+    The function performs an Euler integration of the steering vector into
+    velocity and then re-normalizes the velocity to the original speed so
+    steering changes direction without changing the speed policy.
+    """
     _ = (cube, steer_x, steer_y, dt)
-    # Step 3: add steering to cube.vx / cube.vy.
-    # Step 3: clamp resulting speed if needed.
+    # No steering => nothing to do.
     if steer_x == 0 and steer_y == 0:
         return
 
+    # Preserve the original speed magnitude so steering changes direction
+    # without instantly speeding up or slowing down.
     orig_speed = sqrt(cube.vx**2 + cube.vy**2)
-    
+
+    # Integrate steering into velocity (simple Euler step)
     cube.vx += steer_x * dt
     cube.vy += steer_y * dt
-    
+
+    # Re-normalize velocity to original speed to enforce speed policy
     new_speed = sqrt(cube.vx**2 + cube.vy**2)
     if new_speed > 0:
         cube.vx = (cube.vx / new_speed) * orig_speed
         cube.vy = (cube.vy / new_speed) * orig_speed
+
 
 def apply_bounce_damping(velocity: float) -> float:
     # Centralize repeated bounce math so damping policy lives in one place.
@@ -185,25 +227,32 @@ def apply_bounce_damping(velocity: float) -> float:
 
 
 def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
-    #Make it flee
+    # Per-frame update for a single cube:
+    # 1) Find neighbors and classify them as threats/targets.
     neighbors = find_neighbors(cube, cubes, ANALYSIS_RADIUS_SQ)
 
     threats, targets = compare_neighbors(cube, neighbors)
+    # Choose one target (smallest) to chase if any exist.
     target = single_target(targets)
 
+    # 2) Compute steering: flee from threats, optionally chase a target.
     steer_x, steer_y = compute_flee_steering(cube, threats, FLEE_STEER)
 
     if target:
         chase_x, chase_y = compute_chase_steering(cube, target, CHASE_STEER)
-        
+        # Combine flee and chase vectors
         steer_x += chase_x
         steer_y += chase_y
 
+    # 3) Apply steering to velocity while preserving overall speed.
     apply_steering(cube, steer_x, steer_y, dt)
 
+    # 4) Integrate velocity into position.
     cube.x += cube.vx * dt
     cube.y += cube.vy * dt
 
+    # 5) Handle wall collisions with simple position clamping and
+    #    bounce damping so cubes reverse direction with a damping factor.
     if cube.x <= 0:
         cube.x = 0
         cube.vx = apply_bounce_damping(cube.vx)
@@ -224,7 +273,7 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
 
 
 def check_kill(to_kill: Cube)-> Cube:
-    # Explicit time comparison is clearer than relying on truthy fields.
+    # Replace cube when its lifespan has elapsed by generating a new cube.
     ct = time.time()
     if to_kill.lifespan > 0 and ct > to_kill.death:
         to_kill = create_cube()
@@ -232,17 +281,17 @@ def check_kill(to_kill: Cube)-> Cube:
 
 
 def draw_cube(surface: pygame.Surface, cube: Cube) -> None:
+    # Draw cube as a circle for a softer visual than square rects.
+    # (Original rect-based code is left as a comment for reference.)
     # rect = pygame.Rect(int(cube.x), int(cube.y), cube.size, cube.size)
     # pygame.draw.rect(surface, cube.color, rect, border_radius=4)
-
-    #Alternative to make circles instead of squares
 
     # 1. Calculate the center point
     center_x = int(cube.x + cube.size / 2)
     center_y = int(cube.y + cube.size / 2)
-    
     radius = int(cube.size / 2)
     pygame.draw.circle(surface, cube.color, (center_x, center_y), radius)
+    
 
 def draw_hud(
     surface: pygame.Surface,
@@ -250,9 +299,11 @@ def draw_hud(
     cube_count: int,
     fps_value: float,
 ) -> None:
+    # Render a small HUD with cube count and smoothed FPS value.
     message = f"Cubes: {cube_count}   FPS: {fps_value:.1f}   R: respawn   ESC: quit"
     text = font.render(message, True, (235, 238, 245))
     surface.blit(text, (14, 12))
+
 
 def load_music(filename:str)->None:
     try:
@@ -261,7 +312,9 @@ def load_music(filename:str)->None:
     except FileNotFoundError:
         print(f'File not found: {filename}')
 
+
 def main() -> None:
+    # Initialize pygame and resources
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("Moving Cubes or Circles")
@@ -269,16 +322,20 @@ def main() -> None:
     font = pygame.font.SysFont("couriernew", 20)
     load_music("overworld_day.mp3")
 
+    # Create initial cube population
     cubes = [create_cube() for _ in range(CUBE_COUNT)]
 
     running = True
     displayed_fps = 0.0
     while running:
+        # `dt` is the time delta in seconds used to make motion frame-rate independent
         dt = clock.tick(FPS)/1000
         current_fps = clock.get_fps()
         if current_fps > 0:
+            # Smooth displayed FPS for a steadier readout
             displayed_fps = displayed_fps * 0.9 + current_fps * 0.1
 
+        # Event handling: quit, toggle, and respawn
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -286,12 +343,15 @@ def main() -> None:
                 if event.key in (pygame.K_ESCAPE, pygame.K_q):
                     running = False
                 elif event.key == pygame.K_r:
+                    # Respawn a fresh set of cubes with new random properties
                     cubes = [create_cube() for _ in range(CUBE_COUNT)]
 
+        # Update each cube and replace it if its lifespan expired
         for i in range(len(cubes)):
             update_cube(cubes[i], dt, cubes)
             cubes[i]=check_kill(cubes[i])
 
+        # Render pass: background, all cubes, HUD, then flip display
         screen.fill(BACKGROUND_COLOR)
         for cube in cubes:
             draw_cube(screen, cube)
@@ -299,6 +359,7 @@ def main() -> None:
         pygame.display.flip()
 
     pygame.quit()
+
 
 
 if __name__ == "__main__":

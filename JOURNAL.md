@@ -344,3 +344,12 @@ Context and Reasons for Changes: User requested an efficiency-oriented plan, so 
 - **Hook Version**: 1.02
 - **Date**: 04-05-2026 09:41
 - **Prompt**: add comments to explain each logic step and function. and dont change anything
+- **Agent Version**: 2.3
+- **Date**: 04-05-2026 09:41
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: add comments to explain each logic step and function. and dont change anything
+- **CoPilot Mode**: Edit
+- **CoPilot Model**: GPT-5 mini
+- **Socratic Mode**: ON
+- **Changes Made**: Added explanatory comments throughout `main.py`. No logic or behavior changes were made; comments only.
+- **Context and Reasons for Changes**: The user requested clearer inline documentation for learning and maintainability. Comments explain function responsibilities, steering logic, neighbor detection, collision handling, and rendering steps.
