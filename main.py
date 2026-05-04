@@ -127,6 +127,12 @@ def compare_neighbors(cube: Cube, neighbors: list[Cube], cubes) -> tuple[list[Cu
         elif neighbor.size < cube.size:
             if check_collision(cube, neighbor):
                 kill(neighbor, cubes)
+                if cube.size>=CUBE_MAX_SIZE:
+                    cube.size = CUBE_MAX_SIZE
+                else:
+                    cube.size+= neighbor.size /3
+                cube.vx *=  1/abs(cube.vx)*speed(cube.size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
+                cube.vy *=  1/abs(cube.vy)*speed(cube.size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
             else:
                 targets.append(neighbor)
     return threats, targets
