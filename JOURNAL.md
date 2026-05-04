@@ -339,3 +339,8 @@ Context and Reasons for Changes: User requested an efficiency-oriented plan, so 
 - **Socratic Mode**: ON
 - **Changes Made**: Refactored main.py hot paths and helper structure: squared-distance neighbor checks, reused vector lengths for steering normalization, shared cube/player creation helper, explicit lifespan expiration checks, and centralized bounce damping helper.
 - **Context and Reasons for Changes**: Applied the provided refactoring plan to improve per-frame efficiency and readability while preserving gameplay behavior and keeping code beginner-friendly with concise inline comments.
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 04-05-2026 09:41
+- **Prompt**: add comments to explain each logic step and function. and dont change anything
