@@ -20,6 +20,7 @@ CUBE_MAX_SPEED = 200
 
 #S
 ANALYSIS_RADIUS = 100
+ANALYSIS_RADIUS_SQ = ANALYSIS_RADIUS * ANALYSIS_RADIUS
 FLEE_STEER = 1200
 
 CHASE_STEER = 800
@@ -52,30 +53,22 @@ def random_color() -> Color:
         random.randint(70, 255),
     )
 
-def create_cube() -> Cube:
+def create_random_cube(lifespan: float) -> Cube:
+    # Shared spawn setup keeps cube/player creation in one maintainable place.
     size = random.randint(CUBE_MIN_SIZE, CUBE_MAX_SIZE)
     x = random.uniform(0, WINDOW_WIDTH - size)
     y = random.uniform(0, WINDOW_HEIGHT - size)
     vx = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
     vy = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
-    lifespan = random.randint(LIFESPAN_MIN,LIFESPAN_MAX)
     death = time.time() + lifespan
-    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan,death=death)
+    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan, death=death)
+
+def create_cube() -> Cube:
+    lifespan = random.randint(LIFESPAN_MIN, LIFESPAN_MAX)
+    return create_random_cube(lifespan)
 
 def create_player() -> Cube:
-    size = random.randint(CUBE_MIN_SIZE, CUBE_MAX_SIZE)
-    x = random.uniform(0, WINDOW_WIDTH - size)
-    y = random.uniform(0, WINDOW_HEIGHT - size)
-    vx = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
-    vy = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
-    lifespan = 4096 
-    death = time.time() + lifespan
-    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan,death=death)
-
-
-def customize_spawn(cube: Cube) -> Cube:
-    """Stub hook: customize newly created cubes here."""
-    return cube
+    return create_random_cube(4096)
 
 def speed(size: int, mini: int, maxi: int) -> float:
     return maxi - ((size - CUBE_MIN_SIZE) / (CUBE_MAX_SIZE - CUBE_MIN_SIZE)) * (maxi - mini)
@@ -83,16 +76,17 @@ def speed(size: int, mini: int, maxi: int) -> float:
 def on_cube_bounce(cube: Cube, wall: str) -> None:
     """Stub hook: react to wall collisions (sound, score, effects, etc.)."""
     _ = (cube, wall)
-
-def find_neighbors(cube: Cube, cubes: list[Cube], radius: float)-> list[Cube]:
+def find_neighbors(cube: Cube, cubes: list[Cube], radius_sq: float)-> list[Cube]:
     close = []
+    # Squared-distance checks avoid sqrt() in this per-frame hot loop.
     cx, cy = cube.x + cube.size / 2, cube.y + cube.size / 2
     for neighbor in cubes:
         if neighbor is cube:
             continue
         nx, ny = neighbor.x + neighbor.size / 2, neighbor.y + neighbor.size / 2
-        dist = sqrt((cx - nx)**2 + (cy - ny)**2)
-        if dist <= radius:
+        dx = cx - nx
+        dy = cy - ny
+        if dx * dx + dy * dy <= radius_sq:
             close.append(neighbor)
     return close
 
@@ -110,9 +104,10 @@ def single_target(targets: list[Cube])-> Cube | None:
     if not targets:
         return None
     smallest = targets[0]
-    for i in range(len(targets)):
-        if targets[i].size<smallest.size:
-            smallest=targets[i]
+    # Direct iteration is clearer for beginners than index-based loops.
+    for candidate in targets[1:]:
+        if candidate.size < smallest.size:
+            smallest = candidate
     return smallest
 
 def compute_chase_steering(cube: Cube, target: Cube, steer_strength: float) -> tuple[float, float]:
@@ -123,9 +118,11 @@ def compute_chase_steering(cube: Cube, target: Cube, steer_strength: float) -> t
     tx, ty = target.x + target.size / 2, target.y + target.size / 2
 
     dx, dy = tx - cx, ty - cy
-    dist = sqrt(dx**2 + dy**2)
-    
-    if dist > 0:
+    dist_sq = dx * dx + dy * dy
+
+    if dist_sq > 0:
+        # Reuse one computed length for normalization instead of recomputing.
+        dist = sqrt(dist_sq)
         return (dx / dist) * steer_strength, (dy / dist) * steer_strength
     return 0.0, 0.0
 
@@ -138,21 +135,25 @@ def compute_flee_steering(cube: Cube, threats: list[Cube], steer_strength: float
         return 0.0, 0.0
 
     steer_x, steer_y = 0.0, 0.0
+    # Local copies make repeated values in this loop explicit and slightly cheaper.
+    analysis_radius = ANALYSIS_RADIUS
     cx, cy = cube.x + cube.size / 2, cube.y + cube.size / 2
 
     for threat in threats:
         nx, ny = threat.x + threat.size / 2, threat.y + threat.size / 2
         
         dx, dy = cx - nx, cy - ny # Get a vector between the cube and the threat
-        dist = sqrt(dx**2 + dy**2)
+        dist_sq = dx * dx + dy * dy
         
-        if dist > 0:
-            weight = (ANALYSIS_RADIUS - dist) / ANALYSIS_RADIUS # To now how urgent it is
+        if dist_sq > 0:
+            dist = sqrt(dist_sq)
+            weight = (analysis_radius - dist) / analysis_radius # To now how urgent it is
             steer_x += (dx / dist) * max(0.0, weight) 
             steer_y += (dy / dist) * max(0.0, weight) 
 
-    total_dist = sqrt(steer_x**2 + steer_y**2)
-    if total_dist>0:
+    total_dist_sq = steer_x * steer_x + steer_y * steer_y
+    if total_dist_sq > 0:
+        total_dist = sqrt(total_dist_sq)
     # Normalize and multiply by the strength to make it look more or less intentional
         return (steer_x / total_dist ) * steer_strength, (steer_y / total_dist) * steer_strength
     
@@ -177,10 +178,15 @@ def apply_steering(cube: Cube, steer_x: float, steer_y: float, dt: float) -> Non
         cube.vx = (cube.vx / new_speed) * orig_speed
         cube.vy = (cube.vy / new_speed) * orig_speed
 
+def apply_bounce_damping(velocity: float) -> float:
+    # Centralize repeated bounce math so damping policy lives in one place.
+    damping = random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX) / 100
+    return -velocity * damping
+
 
 def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
     #Make it flee
-    neighbors = find_neighbors(cube, cubes, ANALYSIS_RADIUS)
+    neighbors = find_neighbors(cube, cubes, ANALYSIS_RADIUS_SQ)
 
     threats, targets = compare_neighbors(cube, neighbors)
     target = single_target(targets)
@@ -200,32 +206,27 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
 
     if cube.x <= 0:
         cube.x = 0
-        cube.vx *= -1
-        cube.vx *= random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
+        cube.vx = apply_bounce_damping(cube.vx)
         on_cube_bounce(cube, "left")
     elif cube.x + cube.size >= WINDOW_WIDTH:
         cube.x = WINDOW_WIDTH - cube.size
-        cube.vx *= -1
-        cube.vx *= random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
+        cube.vx = apply_bounce_damping(cube.vx)
         on_cube_bounce(cube, "right")
 
     if cube.y <= 0:
         cube.y = 0
-        cube.vy *= -1
+        cube.vy = apply_bounce_damping(cube.vy)
         on_cube_bounce(cube, "top")
-        cube.vy *= random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
     elif cube.y + cube.size >= WINDOW_HEIGHT:
         cube.y = WINDOW_HEIGHT - cube.size
-        cube.vy *= -1
-        cube.vy *= random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100
+        cube.vy = apply_bounce_damping(cube.vy)
         on_cube_bounce(cube, "bottom")
 
 
 def check_kill(to_kill: Cube)-> Cube:
-    # If it has a to die its an int so true
-    # and if it has to be killed.
+    # Explicit time comparison is clearer than relying on truthy fields.
     ct = time.time()
-    if to_kill.lifespan and ct>to_kill.death:
+    if to_kill.lifespan > 0 and ct > to_kill.death:
         to_kill = create_cube()
     return to_kill
 
@@ -268,7 +269,7 @@ def main() -> None:
     font = pygame.font.SysFont("couriernew", 20)
     load_music("overworld_day.mp3")
 
-    cubes = [customize_spawn(create_cube()) for _ in range(CUBE_COUNT)]
+    cubes = [create_cube() for _ in range(CUBE_COUNT)]
 
     running = True
     displayed_fps = 0.0
@@ -285,7 +286,7 @@ def main() -> None:
                 if event.key in (pygame.K_ESCAPE, pygame.K_q):
                     running = False
                 elif event.key == pygame.K_r:
-                    cubes = [customize_spawn(create_cube()) for _ in range(CUBE_COUNT)]
+                    cubes = [create_cube() for _ in range(CUBE_COUNT)]
 
         for i in range(len(cubes)):
             update_cube(cubes[i], dt, cubes)

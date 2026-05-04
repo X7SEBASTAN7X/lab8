@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Mastery Study Tool</title>
+    <style>
+        :root {
+            --bg: #0b1220;
+            --surface: #131d31;
+            --surface-2: #1b2742;
+            --text: #f2f5fb;
+            --muted: #aeb8cc;
+            --accent: #57d3a5;
+            --accent-2: #7ad7ff;
+            --danger: #ff8d8d;
+            --radius: 14px;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 20% 20%, rgba(122, 215, 255, 0.22), transparent 40%),
+                radial-gradient(circle at 80% 10%, rgba(87, 211, 165, 0.18), transparent 35%),
+                linear-gradient(145deg, #090f1a, #0d1628 50%, #0f1b2f);
+            min-height: 100vh;
+            line-height: 1.45;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        header {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 14px;
+            animation: fade-slide 520ms ease;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.6rem, 2vw + 1rem, 2.4rem);
+            letter-spacing: 0.02em;
+        }
+
+        .subtitle {
+            margin-top: 8px;
+            color: var(--muted);
+        }
+
+        #app {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 8px 20px 30px;
+            display: grid;
+            gap: 16px;
+            animation: fade-slide 700ms ease;
+        }
+
+        .section {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
+        }
+
+        .section h2 {
+            margin: 0 0 8px;
+            font-size: 1.15rem;
+        }
+
+        #study-summary p,
+        #study-summary li,
+        .trace,
+        .explanation,
+        .muted {
+            color: var(--muted);
+        }
+
+        #mode-switcher {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 11px;
+            padding: 10px 14px;
+            color: #06131e;
+            background: linear-gradient(120deg, var(--accent), var(--accent-2));
+            font-weight: 650;
+            cursor: pointer;
+            transition: transform 180ms ease, filter 180ms ease;
+        }
+
+        button:hover,
+        button:focus-visible {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+        }
+
+        button.secondary {
+            background: #243451;
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+        }
+
+        button.ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        #flashcards.hidden,
+        #quiz.hidden,
+        #results.hidden {
+            display: none;
+        }
+
+        #flashcard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .flashcard {
+            perspective: 1200px;
+            min-height: 240px;
+            cursor: pointer;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            padding: 0;
+            border-radius: 12px;
+        }
+
+        .flashcard:focus-visible {
+            outline: 2px solid var(--accent-2);
+            outline-offset: 2px;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            min-height: 240px;
+            transform-style: preserve-3d;
+            transition: transform 420ms ease;
+        }
+
+        .flashcard.is-flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 12px;
+            background: linear-gradient(160deg, #1a2744, #15203a);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: auto;
+            word-break: break-word;
+            box-shadow: var(--shadow);
+        }
+
+        .flashcard-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(160deg, #18364d, #153c49);
+        }
+
+        .flashcard-front h3,
+        .flashcard-back h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: #e8fbff;
+        }
+
+        .trace {
+            font-size: 0.85rem;
+        }
+
+        .quiz-question {
+            display: none;
+            animation: fade-in 220ms ease;
+        }
+
+        .quiz-question.active {
+            display: block;
+        }
+
+        .question-title {
+            margin: 0 0 8px;
+            font-size: 1.03rem;
+        }
+
+        .choice {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+
+        .choice input {
+            margin-top: 3px;
+        }
+
+        .quiz-nav {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .quiz-nav .left,
+        .quiz-nav .right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pill {
+            border-radius: 999px;
+            background: rgba(122, 215, 255, 0.15);
+            color: var(--text);
+            padding: 5px 10px;
+            font-size: 0.82rem;
+        }
+
+        #quiz-results {
+            margin-top: 14px;
+        }
+
+        .result-card {
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 10px;
+            margin-bottom: 9px;
+        }
+
+        .correct {
+            color: #9ff5c7;
+        }
+
+        .incorrect {
+            color: var(--danger);
+        }
+
+        @keyframes fade-slide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0.4;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 960px) {
+            #flashcard-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            #flashcard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section {
+                padding: 13px;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .mode-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .quiz-nav {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .quiz-nav .left,
+            .quiz-nav .right {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Project Mastery: main.py Study Tool</h1>
+        <p class="subtitle">Medium difficulty, 15 implementation-specific questions, evidence-anchored flashcards.</p>
+    </header>
+
+    <!-- STUDY_TOOL_TEMPLATE_VERSION: 2.0 -->
+    <main id="app">
+        <section id="study-summary" class="section">
+            <h2>Study Summary</h2>
+            <p>
+                This project models autonomous cube behavior in a Pygame loop. The strongest themes are data flow between
+                steering functions, state mutation in velocity and position, collision-response rules, and lifecycle replacement
+                via lifespan checks.
+            </p>
+            <ul>
+                <li>Data and state core: Cube dataclass fields like x, y, vx, vy, size, lifespan, and death.</li>
+                <li>Behavior core: find_neighbors, compare_neighbors, compute_flee_steering, and compute_chase_steering.</li>
+                <li>Update pipeline: apply_steering -&gt; update_cube -&gt; check_kill -&gt; draw functions.</li>
+                <li>Complexity focus: neighbor scans and per-frame loops over all cubes.</li>
+            </ul>
+        </section>
+
+        <section id="mode-switcher" class="section">
+            <h2>Mode Switcher</h2>
+            <div class="mode-buttons">
+                <button id="show-flashcards" type="button">Flashcards</button>
+                <button id="show-quiz" class="secondary" type="button">Quiz</button>
+            </div>
+            <p class="muted" id="mode-note">Flashcards are interactive. Click or use Enter/Space to flip each card.</p>
+        </section>
+
+        <section id="flashcards" class="section">
+            <h2>Flashcards</h2>
+            <div id="flashcard-grid"></div>
+        </section>
+
+        <section id="quiz" class="section hidden">
+            <h2>Quiz</h2>
+            <div id="quiz-content"></div>
+            <div class="quiz-nav"></div>
+            <div id="quiz-results"></div>
+        </section>
+
+        <section id="results" class="section hidden">
+            <h2>Results</h2>
+            <div id="results-content" class="muted">Submit the quiz to view your score and answer explanations.</div>
+        </section>
+    </main>
+
+    <script>
+        const STUDY_TOOL_TEMPLATE_VERSION = "2.0";
+        const difficulty = "Medium";
+
+        const flashcards = [
+            {
+                title: "Cube State Shape",
+                prompt: "Which fields drive both motion and lifecycle behavior in the Cube dataclass?",
+                answer: "Motion is driven by x, y, vx, vy, and size. Lifecycle is driven by lifespan and death, where check_kill compares time.time() against death.",
+                trace: { file: "main.py", symbol: "Cube", anchor: "fields lifespan and death" }
+            },
+            {
+                title: "Neighbor Filtering",
+                prompt: "How does the code decide if another cube is inside analysis range?",
+                answer: "find_neighbors computes center points and uses sqrt((cx - nx)**2 + (cy - ny)**2). The neighbor is kept when dist <= ANALYSIS_RADIUS.",
+                trace: { file: "main.py", symbol: "find_neighbors", anchor: "dist <= radius" }
+            },
+            {
+                title: "Threats vs Targets",
+                prompt: "What criterion splits neighbors into threats and targets?",
+                answer: "compare_neighbors checks neighbor.size relative to cube.size. Bigger cubes are threats, smaller cubes are targets, equal sizes are ignored.",
+                trace: { file: "main.py", symbol: "compare_neighbors", anchor: "neighbor.size > cube.size" }
+            },
+            {
+                title: "Flee Direction Weighting",
+                prompt: "Why does flee steering use (ANALYSIS_RADIUS - dist) / ANALYSIS_RADIUS?",
+                answer: "That weight increases urgency for closer threats. The vector is normalized and scaled by steer_strength so direction changes but speed policy is applied later.",
+                trace: { file: "main.py", symbol: "compute_flee_steering", anchor: "weight computation" }
+            },
+            {
+                title: "Speed Preservation",
+                prompt: "How does the code steer without making cubes permanently faster?",
+                answer: "apply_steering adds steer_x and steer_y with dt, then rescales velocity to the original magnitude computed before steering.",
+                trace: { file: "main.py", symbol: "apply_steering", anchor: "orig_speed and new_speed" }
+            },
+            {
+                title: "Frame Update Pipeline",
+                prompt: "What is the order of major operations in each simulation step?",
+                answer: "Event handling, update_cube per cube, check_kill per cube, then drawing (screen.fill, draw_cube, draw_hud, pygame.display.flip).",
+                trace: { file: "main.py", symbol: "main", anchor: "while running loop" }
+            },
+            {
+                title: "Wall Bounce Mutation",
+                prompt: "What state mutates when a cube hits the left wall?",
+                answer: "x is clamped to 0, vx is negated, then multiplied by a random damping factor between BOUNCE_DAMPING_MIN and BOUNCE_DAMPING_MAX divided by 100.",
+                trace: { file: "main.py", symbol: "update_cube", anchor: "if cube.x <= 0" }
+            },
+            {
+                title: "Complexity Hotspot",
+                prompt: "Why can performance degrade with large CUBE_COUNT?",
+                answer: "Each frame updates every cube and each update scans all cubes in find_neighbors. That creates roughly O(n^2) neighbor checks per frame.",
+                trace: { file: "main.py", symbol: "main + find_neighbors", anchor: "for i in range(len(cubes))" }
+            }
+        ];
+
+        const quizData = [
+            {
+                id: "q-0",
+                category: "behavior tracing",
+                prompt: "When update_cube has both threats and a target, which sequence matches the steering computation?",
+                options: [
+                    "compute_flee_steering first, then add compute_chase_steering, then apply_steering",
+                    "compute_chase_steering only, then apply_steering, then compute_flee_steering",
+                    "apply_steering first, then compute_flee_steering and compute_chase_steering",
+                    "compute_chase_steering first and ignore threats"
+                ],
+                correctIndex: 0,
+                explanation: "update_cube computes flee vector from threats, optionally adds chase vector if target exists, then applies the combined steering.",
+                trace: { file: "main.py", symbol: "update_cube", anchor: "steer_x += chase_x" }
+            },
+            {
+                id: "q-1",
+                category: "behavior tracing",
+                prompt: "What does check_kill do when current time passes a cube's death timestamp?",
+                options: [
+                    "Sets lifespan to zero and keeps the same cube",
+                    "Replaces the cube by calling create_cube",
+                    "Reverses cube velocity to keep it alive",
+                    "Pauses update_cube for one frame"
+                ],
+                correctIndex: 1,
+                explanation: "check_kill returns create_cube() when ct > to_kill.death and lifespan is truthy.",
+                trace: { file: "main.py", symbol: "check_kill", anchor: "to_kill = create_cube()" }
+            },
+            {
+                id: "q-2",
+                category: "behavior tracing",
+                prompt: "Why is displayed_fps updated with displayed_fps * 0.9 + current_fps * 0.1?",
+                options: [
+                    "To randomize fps output each frame",
+                    "To smooth jitter by exponential averaging",
+                    "To cap FPS at exactly 60",
+                    "To sync with cube lifespan"
+                ],
+                correctIndex: 1,
+                explanation: "This weighted average smooths short-term FPS spikes so HUD output is more stable.",
+                trace: { file: "main.py", symbol: "main", anchor: "displayed_fps smoothing" }
+            },
+            {
+                id: "q-3",
+                category: "behavior tracing",
+                prompt: "single_target selects which target from the target list?",
+                options: [
+                    "The closest target by distance",
+                    "The largest target by size",
+                    "The smallest target by size",
+                    "A random target"
+                ],
+                correctIndex: 2,
+                explanation: "single_target initializes with targets[0] and replaces it when a smaller size is found.",
+                trace: { file: "main.py", symbol: "single_target", anchor: "if targets[i].size < smallest.size" }
+            },
+            {
+                id: "q-4",
+                category: "debugging",
+                prompt: "A cube appears frozen after steering. Which condition in apply_steering is the first place to inspect?",
+                options: [
+                    "The early return when steer_x == 0 and steer_y == 0",
+                    "The random color generator",
+                    "The draw_hud message string",
+                    "The pygame.display.flip call"
+                ],
+                correctIndex: 0,
+                explanation: "If both steering components are zero, apply_steering returns immediately and velocity remains unchanged.",
+                trace: { file: "main.py", symbol: "apply_steering", anchor: "if steer_x == 0 and steer_y == 0" }
+            },
+            {
+                id: "q-5",
+                category: "debugging",
+                prompt: "You hear no background music even though the game runs. Which built-in diagnostic already exists?",
+                options: [
+                    "A FileNotFoundError print in load_music",
+                    "An assert in main that checks mp3 duration",
+                    "A return code from pygame.display.set_mode",
+                    "A fallback to another audio file"
+                ],
+                correctIndex: 0,
+                explanation: "load_music catches FileNotFoundError and prints File not found: filename.",
+                trace: { file: "main.py", symbol: "load_music", anchor: "except FileNotFoundError" }
+            },
+            {
+                id: "q-6",
+                category: "debugging",
+                prompt: "If cubes speed up or slow down over many wall bounces, which lines are the direct cause?",
+                options: [
+                    "Displayed FPS smoothing lines",
+                    "Random damping multipliers applied to vx and vy after wall collisions",
+                    "Death timestamp assignment",
+                    "Neighbor distance check"
+                ],
+                correctIndex: 1,
+                explanation: "The random factor random.randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX)/100 modifies velocity magnitude on every bounce.",
+                trace: { file: "main.py", symbol: "update_cube", anchor: "BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX" }
+            },
+            {
+                id: "q-7",
+                category: "design tradeoff",
+                prompt: "Why keep Cube as a dataclass instead of plain tuples for each cube?",
+                options: [
+                    "Tuples are mutable so they are better for updates",
+                    "Dataclass fields are named and mutable, making x/y/vx/vy updates readable and less error-prone",
+                    "Dataclass automatically computes nearest neighbors",
+                    "Tuples cannot store integers"
+                ],
+                correctIndex: 1,
+                explanation: "The update loop mutates fields repeatedly. Named attributes improve clarity and maintenance.",
+                trace: { file: "main.py", symbol: "Cube + update_cube", anchor: "cube.x += cube.vx * dt" }
+            },
+            {
+                id: "q-8",
+                category: "design tradeoff",
+                prompt: "What is a tradeoff of choosing single_target as the smallest target by size rather than nearest target by distance?",
+                options: [
+                    "It always minimizes total path length",
+                    "It can select a far-away cube, causing less immediate chase behavior",
+                    "It prevents compute_chase_steering from running",
+                    "It makes update_cube O(1)"
+                ],
+                correctIndex: 1,
+                explanation: "single_target considers only size, not distance, so target choice may be strategically weak for immediate movement.",
+                trace: { file: "main.py", symbol: "single_target", anchor: "size comparison only" }
+            },
+            {
+                id: "q-9",
+                category: "design tradeoff",
+                prompt: "What is the purpose of preserving original speed magnitude after steering in apply_steering?",
+                options: [
+                    "To guarantee all cubes have identical colors",
+                    "To keep turning behavior while enforcing the existing speed policy tied to size",
+                    "To make cubes stop near walls",
+                    "To reduce memory usage"
+                ],
+                correctIndex: 1,
+                explanation: "Rescaling to orig_speed keeps steering directional while preserving speed constraints chosen elsewhere.",
+                trace: { file: "main.py", symbol: "apply_steering", anchor: "cube.vx = (cube.vx / new_speed) * orig_speed" }
+            },
+            {
+                id: "q-10",
+                category: "edge case",
+                prompt: "compute_flee_steering checks if dist > 0 before normalizing. What bug does this prevent?",
+                options: [
+                    "Out-of-memory error when many cubes spawn",
+                    "Division by zero when a threat center matches cube center",
+                    "FPS dropping below 60",
+                    "Color channel overflow"
+                ],
+                correctIndex: 1,
+                explanation: "Normalization divides by dist, so dist == 0 would crash without this guard.",
+                trace: { file: "main.py", symbol: "compute_flee_steering", anchor: "if dist > 0" }
+            },
+            {
+                id: "q-11",
+                category: "edge case",
+                prompt: "What happens in compute_chase_steering when cube and target centers are identical?",
+                options: [
+                    "Returns steer_strength on both axes",
+                    "Returns (0.0, 0.0) due to zero distance guard",
+                    "Raises a RuntimeError",
+                    "Switches to flee mode"
+                ],
+                correctIndex: 1,
+                explanation: "If dist is not greater than zero, the function returns zero steering vector.",
+                trace: { file: "main.py", symbol: "compute_chase_steering", anchor: "if dist > 0" }
+            },
+            {
+                id: "q-12",
+                category: "edge case",
+                prompt: "Why is check_kill unlikely to respawn the player created by create_player?",
+                options: [
+                    "create_player sets lifespan to 0",
+                    "create_player sets lifespan to 4096, so death is far in the future",
+                    "check_kill ignores all cubes",
+                    "create_player does not set death"
+                ],
+                correctIndex: 1,
+                explanation: "The player lifespan is long (4096 seconds), so death threshold is rarely reached in short sessions.",
+                trace: { file: "main.py", symbol: "create_player + check_kill", anchor: "lifespan = 4096" }
+            },
+            {
+                id: "q-13",
+                category: "big-o",
+                prompt: "Assume n cubes. What is the dominant time complexity per frame for neighbor analysis in this implementation?",
+                options: [
+                    "O(1) because ANALYSIS_RADIUS is constant",
+                    "O(log n) due to sorted targets",
+                    "O(n^2) because each cube can scan all cubes in find_neighbors",
+                    "O(n^3) due to triple nested loops"
+                ],
+                correctIndex: 2,
+                explanation: "main loops over n cubes, and find_neighbors may iterate over n neighbors for each cube.",
+                trace: { file: "main.py", symbol: "main + find_neighbors", anchor: "for i in range(len(cubes)) and for neighbor in cubes" }
+            },
+            {
+                id: "q-14",
+                category: "big-o",
+                prompt: "What is the time complexity of single_target over a target list of size k, and why?",
+                options: [
+                    "O(k) because it linearly scans each candidate once",
+                    "O(log k) because it binary searches by size",
+                    "O(k^2) because it compares every pair",
+                    "O(1) because smallest is initialized from index 0"
+                ],
+                correctIndex: 0,
+                explanation: "single_target uses one loop through the list and updates smallest when needed.",
+                trace: { file: "main.py", symbol: "single_target", anchor: "for i in range(len(targets))" }
+            }
+        ];
+
+        const state = {
+            mode: "flashcards",
+            currentQuestion: 0,
+            answers: new Array(quizData.length).fill(null),
+            submitted: false
+        };
+
+        function setMode(mode) {
+            state.mode = mode;
+            const flashcardsSection = document.getElementById("flashcards");
+            const quizSection = document.getElementById("quiz");
+            const resultsSection = document.getElementById("results");
+            const modeNote = document.getElementById("mode-note");
+
+            if (!flashcardsSection || !quizSection || !resultsSection || !modeNote) {
+                console.error("Missing mode sections or mode note element.");
+                return;
+            }
+
+            if (mode === "quiz") {
+                flashcardsSection.classList.add("hidden");
+                quizSection.classList.remove("hidden");
+                resultsSection.classList.add("hidden");
+                modeNote.textContent = "Quiz mode is active. Navigate questions, then submit for scoring.";
+                showQuestion(state.currentQuestion);
+                updateQuizNav();
+                return;
+            }
+
+            flashcardsSection.classList.remove("hidden");
+            quizSection.classList.add("hidden");
+            resultsSection.classList.add("hidden");
+            modeNote.textContent = "Flashcards are interactive. Click or use Enter/Space to flip each card.";
+        }
+
+        function renderFlashcards() {
+            const grid = document.getElementById("flashcard-grid");
+            if (!grid) {
+                console.error("Missing #flashcard-grid.");
+                return;
+            }
+
+            const cardsHtml = flashcards.map((card, idx) => {
+                return `
+                    <article class="flashcard" role="button" tabindex="0" aria-label="Flashcard ${idx + 1}: ${card.title}" data-index="${idx}">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">
+                                <h3>${card.title}</h3>
+                                <div>${card.prompt}</div>
+                                <div class="trace">Trace: ${card.trace.file} :: ${card.trace.symbol} :: ${card.trace.anchor}</div>
+                            </div>
+                            <div class="flashcard-back">
+                                <h3>Answer</h3>
+                                <div>${card.answer}</div>
+                                <div class="trace">Evidence Anchor: ${card.trace.anchor}</div>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+
+            grid.innerHTML = cardsHtml;
+
+            grid.addEventListener("click", (event) => {
+                const card = event.target.closest(".flashcard");
+                if (!card || !grid.contains(card)) {
+                    return;
+                }
+                card.classList.toggle("is-flipped");
+            });
+
+            grid.addEventListener("keydown", (event) => {
+                const card = event.target.closest(".flashcard");
+                if (!card || !grid.contains(card)) {
+                    return;
+                }
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    card.classList.toggle("is-flipped");
+                }
+            });
+        }
+
+        function initializeQuizDOM() {
+            const quizContent = document.getElementById("quiz-content");
+            if (!quizContent) {
+                console.error("Missing required #quiz-content container.");
+                return;
+            }
+
+            const quizHtml = quizData.map((item, index) => {
+                const choices = item.options.map((option, optionIndex) => {
+                    const inputId = `${item.id}-choice-${optionIndex}`;
+                    return `
+                        <label class="choice" for="${inputId}">
+                            <input
+                                id="${inputId}"
+                                type="radio"
+                                name="${item.id}"
+                                value="${optionIndex}"
+                                data-question-index="${index}"
+                            />
+                            <span>${option}</span>
+                        </label>
+                    `;
+                }).join("");
+
+                return `
+                    <article class="quiz-question" id="${item.id}" data-question-index="${index}">
+                        <div class="pill">${item.category}</div>
+                        <p class="question-title">${index + 1}. ${item.prompt}</p>
+                        <div class="trace">Trace: ${item.trace.file} :: ${item.trace.symbol} :: ${item.trace.anchor}</div>
+                        <div>${choices}</div>
+                    </article>
+                `;
+            }).join("");
+
+            quizContent.innerHTML = quizHtml;
+
+            quizContent.addEventListener("change", (event) => {
+                const input = event.target;
+                if (!(input instanceof HTMLInputElement) || input.type !== "radio") {
+                    return;
+                }
+                const questionIndex = Number(input.dataset.questionIndex);
+                const selected = Number(input.value);
+                state.answers[questionIndex] = selected;
+                updateQuizNav();
+            });
+
+            showQuestion(0);
+            updateQuizNav();
+        }
+
+        function showQuestion(index) {
+            const allQuestions = document.querySelectorAll(".quiz-question");
+            allQuestions.forEach((node, nodeIndex) => {
+                node.classList.toggle("active", nodeIndex === index);
+            });
+        }
+
+        function nextQuestion() {
+            if (state.currentQuestion < quizData.length - 1) {
+                state.currentQuestion += 1;
+                showQuestion(state.currentQuestion);
+                updateQuizNav();
+            }
+        }
+
+        function prevQuestion() {
+            if (state.currentQuestion > 0) {
+                state.currentQuestion -= 1;
+                showQuestion(state.currentQuestion);
+                updateQuizNav();
+            }
+        }
+
+        function updateQuizNav() {
+            const nav = document.querySelector(".quiz-nav");
+            if (!nav) {
+                console.error("Missing required .quiz-nav container.");
+                return;
+            }
+
+            const answeredCount = state.answers.filter((entry) => entry !== null).length;
+            const atLast = state.currentQuestion === quizData.length - 1;
+
+            const navHtml = `
+                <div class="left">
+                    <button type="button" class="ghost" id="prev-btn" ${state.currentQuestion === 0 ? "disabled" : ""}>Previous</button>
+                    <button type="button" class="ghost" id="next-btn" ${atLast ? "disabled" : ""}>Next</button>
+                </div>
+                <div class="right">
+                    <span class="pill">Question ${state.currentQuestion + 1} / ${quizData.length}</span>
+                    <span class="pill">Answered ${answeredCount} / ${quizData.length}</span>
+                    ${atLast ? "<button type=\"button\" id=\"submit-btn\">Submit Quiz</button>" : ""}
+                </div>
+            `;
+
+            nav.innerHTML = navHtml;
+
+            const prevBtn = document.getElementById("prev-btn");
+            const nextBtn = document.getElementById("next-btn");
+            const submitBtn = document.getElementById("submit-btn");
+
+            if (prevBtn) {
+                prevBtn.addEventListener("click", prevQuestion);
+            }
+            if (nextBtn) {
+                nextBtn.addEventListener("click", nextQuestion);
+            }
+            if (submitBtn) {
+                submitBtn.addEventListener("click", gradeQuiz);
+            }
+        }
+
+        function gradeQuiz() {
+            if (state.submitted) {
+                return;
+            }
+
+            state.submitted = true;
+
+            const quizContent = document.getElementById("quiz-content");
+            const quizResults = document.getElementById("quiz-results");
+            const resultsSection = document.getElementById("results");
+            const resultsContent = document.getElementById("results-content");
+
+            if (!quizContent || !quizResults || !resultsSection || !resultsContent) {
+                console.error("Missing quiz results containers.");
+                return;
+            }
+
+            let score = 0;
+            const resultCards = quizData.map((item, index) => {
+                const chosen = state.answers[index];
+                const isCorrect = chosen === item.correctIndex;
+                if (isCorrect) {
+                    score += 1;
+                }
+
+                const chosenText = chosen === null ? "No answer selected" : item.options[chosen];
+                const correctText = item.options[item.correctIndex];
+
+                return `
+                    <article class="result-card">
+                        <div><strong>Q${index + 1}:</strong> ${item.prompt}</div>
+                        <div class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</div>
+                        <div class="muted">Your answer: ${chosenText}</div>
+                        <div class="muted">Correct answer: ${correctText}</div>
+                        <div class="explanation">Why: ${item.explanation}</div>
+                        <div class="trace">Trace: ${item.trace.file} :: ${item.trace.symbol} :: ${item.trace.anchor}</div>
+                    </article>
+                `;
+            }).join("");
+
+            const scoreLine = `<p><strong>Score:</strong> ${score} / ${quizData.length} (1 point per question)</p>`;
+
+            quizResults.innerHTML = scoreLine;
+            resultsContent.innerHTML = `${scoreLine}${resultCards}`;
+
+            resultsSection.classList.remove("hidden");
+
+            const allInputs = quizContent.querySelectorAll("input[type='radio']");
+            allInputs.forEach((node) => {
+                node.disabled = true;
+            });
+
+            const nav = document.querySelector(".quiz-nav");
+            if (nav) {
+                nav.innerHTML = "<span class='pill'>Quiz submitted. Review results below.</span>";
+            }
+
+            quizContent.classList.add("muted");
+        }
+
+        function validateStudyToolDOM() {
+            const missing = [];
+
+            if (!document.getElementById("quiz-content")) {
+                missing.push("#quiz-content");
+            }
+            if (!document.querySelector(".quiz-nav")) {
+                missing.push(".quiz-nav");
+            }
+            if (!document.getElementById("quiz-results")) {
+                missing.push("#quiz-results");
+            }
+
+            for (let i = 0; i < quizData.length; i += 1) {
+                if (!document.getElementById(`q-${i}`)) {
+                    missing.push(`#q-${i}`);
+                }
+            }
+
+            const flashcardNodes = document.querySelectorAll(".flashcard");
+            if (flashcardNodes.length === 0) {
+                missing.push(".flashcard");
+            }
+            flashcardNodes.forEach((card, index) => {
+                if (!card.querySelector(".flashcard-front")) {
+                    missing.push(`.flashcard-front (card ${index})`);
+                }
+                if (!card.querySelector(".flashcard-back")) {
+                    missing.push(`.flashcard-back (card ${index})`);
+                }
+            });
+
+            if (missing.length > 0) {
+                console.error("Study tool DOM validation failed. Missing nodes:", missing);
+            }
+        }
+
+        function initializeModeSwitcher() {
+            const flashButton = document.getElementById("show-flashcards");
+            const quizButton = document.getElementById("show-quiz");
+
+            if (!flashButton || !quizButton) {
+                console.error("Mode switch buttons missing.");
+                return;
+            }
+
+            flashButton.addEventListener("click", () => setMode("flashcards"));
+            quizButton.addEventListener("click", () => setMode("quiz"));
+        }
+
+        function initializeApp() {
+            renderFlashcards();
+            initializeQuizDOM();
+            initializeModeSwitcher();
+            validateStudyToolDOM();
+            setMode("flashcards");
+        }
+
+        initializeApp();
+    </script>
+</body>
+</html>

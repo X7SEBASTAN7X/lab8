@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lab8 Architecture</title>
+  <style>
+    :root {
+      --bg: #f7f6f3;
+      --panel: #ffffff;
+      --ink: #1a1f2b;
+      --muted: #4e5a70;
+      --line: #d8dce5;
+      --accent: #1f6feb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, #e7eefc 0%, transparent 45%),
+        radial-gradient(circle at 90% 0%, #fbe8d4 0%, transparent 35%),
+        var(--bg);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 48px;
+    }
+
+    header {
+      margin-bottom: 20px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.7rem;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    section {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      overflow-x: auto;
+    }
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+
+    .note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    code {
+      color: var(--accent);
+      font-family: "IBM Plex Mono", "Consolas", monospace;
+    }
+  </style>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "default" });
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Project Architecture</h1>
+      <p>Architecture synthesized from <code>main.py</code> in the current workspace.</p>
+    </header>
+
+    <section>
+      <h2>Module Dependency Graph</h2>
+      <pre class="mermaid">flowchart LR
+    subgraph "Project Module"
+        M["main.py"]
+    end
+
+    subgraph "External Library"
+        P["pygame"]
+    end
+
+    subgraph "Python Standard Library"
+        R["random"]
+        T["time"]
+        S["math.sqrt"]
+        D["dataclasses.dataclass"]
+        F["__future__.annotations"]
+    end
+
+    M -->|"imports"| P
+    M -->|"imports"| R
+    M -->|"imports"| T
+    M -->|"imports"| S
+    M -->|"imports"| D
+    M -->|"imports"| F
+      </pre>
+      <p class="note">Single-module project with pygame plus standard-library dependencies.</p>
+    </section>
+
+    <section>
+      <h2>High-Level Runtime Flow</h2>
+      <pre class="mermaid">flowchart TD
+    A["Program Start"] --> B["main"]
+    B --> C["pygame.init() and display setup"]
+    C --> D["load_music(overworld_day.mp3)"]
+    D --> E["create initial cubes list"]
+    E --> F{"running?"}
+
+    F -->|"yes"| G["tick clock and compute dt/fps"]
+    G --> H["process input events"]
+    H --> I{"exit or respawn input?"}
+
+    I -->|"exit"| Z["pygame.quit()"]
+    I -->|"respawn"| E2["recreate cubes list"]
+    E2 --> J["update every cube"]
+    I -->|"continue"| J
+
+    J --> K["render cubes and HUD"]
+    K --> L["display.flip()"]
+    L --> F
+
+    F -->|"no"| Z
+      </pre>
+      <p class="note">Core frame loop branches on quit and respawn controls, then updates and renders.</p>
+    </section>
+
+    <section>
+      <h2>Function-Level Call Graph</h2>
+      <pre class="mermaid">flowchart TB
+    MAIN["main"] --> LM["load_music"]
+    MAIN --> CC["create_cube"]
+    MAIN --> UC["update_cube"]
+    MAIN --> CK["check_kill"]
+    MAIN --> DC["draw_cube"]
+    MAIN --> DH["draw_hud"]
+
+    CC --> SPD["speed"]
+    CC --> RC["random_color"]
+
+    UC --> FN["find_neighbors"]
+    UC --> CN["compare_neighbors"]
+    UC --> ST["single_target"]
+    UC --> CFS["compute_flee_steering"]
+    UC --> CCS["compute_chase_steering"]
+    UC --> AS["apply_steering"]
+    UC --> OCB["on_cube_bounce"]
+
+    CK --> CC
+
+    FN --> SQ1["sqrt"]
+    CFS --> SQ2["sqrt"]
+    CCS --> SQ3["sqrt"]
+    AS --> SQ4["sqrt"]
+      </pre>
+      <p class="note">Update logic composes neighbor analysis, steering synthesis, movement integration, and wall collision handling.</p>
+    </section>
+
+    <section>
+      <h2>Primary Execution Sequence</h2>
+      <pre class="mermaid">sequenceDiagram
+    participant U as "User"
+    participant E as "Event Queue"
+    participant M as "main()"
+    participant C as "Cube Update Pipeline"
+    participant R as "Renderer"
+    participant D as "Display"
+
+    U->>E: "provides keyboard or window events"
+    M->>M: "tick clock and smooth fps"
+    M->>E: "poll pygame events"
+
+    alt "quit event or ESC or Q"
+        M->>M: "set running False"
+    else "R key pressed"
+        M->>M: "recreate cubes list"
+    else "no control event"
+        M->>M: "keep current cubes"
+    end
+
+    loop "for each cube index"
+        M->>C: "update_cube(cube, dt, cubes)"
+        C->>C: "neighbors, threats, target, steering"
+        C->>C: "position update and wall bounce"
+        C-->>M: "updated cube"
+        M->>M: "check_kill and optional respawn"
+    end
+
+    loop "for each cube"
+        M->>R: "draw_cube(surface, cube)"
+    end
+
+    M->>R: "draw_hud(surface, font, count, fps)"
+    R->>D: "flip display"
+      </pre>
+      <p class="note">This sequence captures the full per-frame execution path and its major branches.</p>
+    </section>
+  </div>
+</body>
+</html>
