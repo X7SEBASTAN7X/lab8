@@ -11,8 +11,17 @@ lines:64-80
 line:327
 line:349
 
+- Additional: Changed unpacking to amount, size. Because i had it on the wrong order
+
 ## EXERCISE 2 - Respawn with same size
 
 1. Make the kill function take the destroyed size and pass it on to the new create function
 
 Implemented in line:280
+
+
+## EXERCISE 3 - Screen Wrapping
+
+1. Instead of modifying direction, just reset the x or y by: 0 or the sreen size (adjusting by cube size to avoid bugs)
+
+Commented old solution, new avalailable on lines:275-284

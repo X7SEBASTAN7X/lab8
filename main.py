@@ -254,23 +254,34 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
 
     # 5) Handle wall collisions with simple position clamping and
     #    bounce damping so cubes reverse direction with a damping factor.
+    # if cube.x <= 0:
+    #     cube.x = 0
+    #     cube.vx = apply_bounce_damping(cube.vx)
+    #     on_cube_bounce(cube, "left")
+    # elif cube.x + cube.size >= WINDOW_WIDTH:
+    #     cube.x = WINDOW_WIDTH - cube.size
+    #     cube.vx = apply_bounce_damping(cube.vx)
+    #     on_cube_bounce(cube, "right")
+
+    # if cube.y <= 0:
+    #     cube.y = 0
+    #     cube.vy = apply_bounce_damping(cube.vy)
+    #     on_cube_bounce(cube, "top")
+    # elif cube.y + cube.size >= WINDOW_HEIGHT:
+    #     cube.y = WINDOW_HEIGHT - cube.size
+    #     cube.vy = apply_bounce_damping(cube.vy)
+    #     on_cube_bounce(cube, "bottom")
+
+    # 5) New, Wrapping around:
     if cube.x <= 0:
-        cube.x = 0
-        cube.vx = apply_bounce_damping(cube.vx)
-        on_cube_bounce(cube, "left")
+        cube.x = WINDOW_WIDTH-cube.size
     elif cube.x + cube.size >= WINDOW_WIDTH:
-        cube.x = WINDOW_WIDTH - cube.size
-        cube.vx = apply_bounce_damping(cube.vx)
-        on_cube_bounce(cube, "right")
+        cube.x = 0+cube.size
 
     if cube.y <= 0:
-        cube.y = 0
-        cube.vy = apply_bounce_damping(cube.vy)
-        on_cube_bounce(cube, "top")
+        cube.y = WINDOW_HEIGHT-cube.size
     elif cube.y + cube.size >= WINDOW_HEIGHT:
-        cube.y = WINDOW_HEIGHT - cube.size
-        cube.vy = apply_bounce_damping(cube.vy)
-        on_cube_bounce(cube, "bottom")
+        cube.y = 0+cube.size
 
 
 def check_kill(to_kill: Cube)-> Cube:
@@ -324,7 +335,7 @@ def main() -> None:
     load_music("overworld_day.mp3")
 
     # Create initial cube population
-    cubes = [create_cube(size)  for size, number in CUBE_SIZE_COUNT
+    cubes = [create_cube(size)  for number, size in CUBE_SIZE_COUNT
              for _ in range(number)]
 
     running = True
@@ -346,7 +357,7 @@ def main() -> None:
                     running = False
                 elif event.key == pygame.K_r:
                     # Respawn a fresh set of cubes with new random properties
-                    cubes = [create_cube(size)  for size, number in CUBE_SIZE_COUNT
+                    cubes = [create_cube(size)  for number, size in CUBE_SIZE_COUNT
                             for _ in range(number)]
         # Update each cube and replace it if its lifespan expired
         for i in range(len(cubes)):
