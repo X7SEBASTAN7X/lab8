@@ -12,6 +12,9 @@ BACKGROUND_COLOR = (20, 24, 30)
 FPS = 60
 
 CUBE_COUNT = 20
+
+CUBE_SIZE_COUNT: list[tuple] = [(5,25),(10,10),(30,4)]
+
 CUBE_MIN_SIZE = 10
 CUBE_MAX_SIZE = 75
 CUBE_MIN_SPEED = 20
@@ -33,6 +36,7 @@ LIFESPAN_MAX = 60
 BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX = 95,105
 
 Color = tuple[int, int, int]
+
 
 
 @dataclass
@@ -57,10 +61,9 @@ def random_color() -> Color:
     )
 
 
-def create_random_cube(lifespan: float) -> Cube:
+def create_random_cube(lifespan: float, size: int) -> Cube:
     # Shared spawn setup: choose size and position, pick a velocity
     # consistent with the size-based speed policy, and compute death time.
-    size = random.randint(CUBE_MIN_SIZE, CUBE_MAX_SIZE)
     x = random.uniform(0, WINDOW_WIDTH - size)
     y = random.uniform(0, WINDOW_HEIGHT - size)
     vx = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
@@ -69,15 +72,13 @@ def create_random_cube(lifespan: float) -> Cube:
     return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan, death=death)
 
 
-def create_cube() -> Cube:
+def create_cube(size: int = None) -> Cube:
     # Create a cube with a random lifespan within configured bounds.
     lifespan = random.randint(LIFESPAN_MIN, LIFESPAN_MAX)
-    return create_random_cube(lifespan)
+    if size is None:
+        size = random.randint(CUBE_MIN_SIZE, CUBE_MAX_SIZE) 
+    return create_random_cube(lifespan, size=size)
 
-
-def create_player() -> Cube:
-    # Create a long-lived cube used as a 'player' placeholder.
-    return create_random_cube(4096)
 
 
 def speed(size: int, mini: int, maxi: int) -> float:
@@ -276,7 +277,7 @@ def check_kill(to_kill: Cube)-> Cube:
     # Replace cube when its lifespan has elapsed by generating a new cube.
     ct = time.time()
     if to_kill.lifespan > 0 and ct > to_kill.death:
-        to_kill = create_cube()
+        to_kill = create_cube(to_kill.size)
     return to_kill
 
 
@@ -286,7 +287,7 @@ def draw_cube(surface: pygame.Surface, cube: Cube) -> None:
     # rect = pygame.Rect(int(cube.x), int(cube.y), cube.size, cube.size)
     # pygame.draw.rect(surface, cube.color, rect, border_radius=4)
 
-    # 1. Calculate the center point
+    # # 1. Calculate the center point
     center_x = int(cube.x + cube.size / 2)
     center_y = int(cube.y + cube.size / 2)
     radius = int(cube.size / 2)
@@ -323,7 +324,8 @@ def main() -> None:
     load_music("overworld_day.mp3")
 
     # Create initial cube population
-    cubes = [create_cube() for _ in range(CUBE_COUNT)]
+    cubes = [create_cube(size)  for size, number in CUBE_SIZE_COUNT
+             for _ in range(number)]
 
     running = True
     displayed_fps = 0.0
