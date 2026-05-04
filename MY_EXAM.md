@@ -46,3 +46,21 @@ Is neighbor -> is target -> is colliding -> if true: Recreate
 
 - Completed, but had to modify functions to additionally pass the cubes list as a total to know which cube needs to be replaced and being able to do it
 
+## EXERCISE 6 - Eating ++
+Having lines when crossing the map
+
+solved deleting the list when oging through
+
+## EXERCISE 7 -  Trails
+Having lines when crossing the map
+
+solved deleting the list when oging through
+
+
+## Exercise 10
+Implemented correctly
+
+## Exercise 11
+Implemented with
+self.angle = random.uniform(self.angle-spread, self.angle+spread)
+

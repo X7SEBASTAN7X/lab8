@@ -37,6 +37,8 @@ BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX = 95,105
 
 RECT_CUBES: list = []
 
+TRAIL_LENGTHS = 30
+
 
 Color = tuple[int, int, int]
 
@@ -52,6 +54,7 @@ class Cube:
     color: Color
     lifespan: float
     death: float
+    line: list
 
 
 # Return a bright RGB color tuple so cubes contrast the dark background.
@@ -72,7 +75,7 @@ def create_random_cube(lifespan: float, size: int) -> Cube:
     vx = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
     vy = random.choice((-1, 1)) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
     death = time.time() + lifespan
-    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan, death=death)
+    return Cube(x=x, y=y, size=size, vx=vx, vy=vy, color=random_color(), lifespan=lifespan, death=death, line=[(x,y)])
 
 
 def create_cube(size: int = None) -> Cube:
@@ -242,6 +245,12 @@ def apply_bounce_damping(velocity: float) -> float:
 
 
 def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
+    center_x = int(cube.x + cube.size / 2)
+    center_y = int(cube.y + cube.size / 2)
+    cube.line.append((center_x,center_y))
+    while len(cube.line)>TRAIL_LENGTHS:
+        cube.line.pop(0)
+    
     # Per-frame update for a single cubes
     # 1) Find neighbors and classify them as threats/targets. 
     neighbors = find_neighbors(cube, cubes, ANALYSIS_RADIUS_SQ)
@@ -289,13 +298,20 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
     # 5) New, Wrapping around:
     if cube.x <= 0:
         cube.x = WINDOW_WIDTH-cube.size
+        cube.line = [(cube.x,cube.y)]
     elif cube.x + cube.size >= WINDOW_WIDTH:
         cube.x = 0+cube.size
+        cube.line = [(cube.x,cube.y)]
+
 
     if cube.y <= 0:
         cube.y = WINDOW_HEIGHT-cube.size
+        cube.line = [(cube.x,cube.y)]
+
     elif cube.y + cube.size >= WINDOW_HEIGHT:
         cube.y = 0+cube.size
+        cube.line = [(cube.x,cube.y)]
+
 
 def kill(to_kill: Cube, cubes: list[Cube])-> Cube:
     # Replace cube, with the same size
@@ -310,6 +326,15 @@ def check_kill(to_kill: Cube)-> Cube:
         to_kill = create_cube(to_kill.size)
     return to_kill
 
+def add_line(cube: Cube, surface)-> None:
+    color: tuple[int,int,int] = cube.color
+    width: int = 2
+    for i in range(1, len(cube.line)): 
+        start_pos = tuple([int(x) for x in cube.line[i-1]])
+        end_pos = tuple([int(x) for x in cube.line[i]])
+        pygame.draw.line(surface, color, start_pos, end_pos, width)
+
+    
 
 def draw_cube(surface: pygame.Surface, cube: Cube) -> None:
     # Draw cube as a circle for a softer visual than square rects.
@@ -323,6 +348,7 @@ def draw_cube(surface: pygame.Surface, cube: Cube) -> None:
     center_y = int(cube.y + cube.size / 2)
     radius = int(cube.size / 2)
     pygame.draw.circle(surface, cube.color, (center_x, center_y), radius)
+    add_line(cube, surface=surface)
     
 
 def draw_hud(
