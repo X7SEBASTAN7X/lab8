@@ -113,7 +113,7 @@ def find_neighbors(cube: Cube, cubes: list[Cube], radius_sq: float)-> list[Cube]
     return close
 
 
-def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> tuple[list[Cube], list[Cube]]:
+def compare_neighbors(cube: Cube, neighbors: list[Cube], cubes) -> tuple[list[Cube], list[Cube]]:
     """Classify neighbors into threats (larger) and targets (smaller).
 
     A 'threat' is any neighbor strictly larger than `cube`; a 'target'
@@ -125,7 +125,10 @@ def compare_neighbors(cube: Cube, neighbors: list[Cube]) -> tuple[list[Cube], li
         if neighbor.size > cube.size:
             threats.append(neighbor)
         elif neighbor.size < cube.size:
-            targets.append(neighbor)
+            if check_collision(cube, neighbor):
+                kill(neighbor, cubes)
+            else:
+                targets.append(neighbor)
     return threats, targets
 
 
@@ -237,7 +240,7 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
     # 1) Find neighbors and classify them as threats/targets. 
     neighbors = find_neighbors(cube, cubes, ANALYSIS_RADIUS_SQ)
 
-    threats, targets = compare_neighbors(cube, neighbors)
+    threats, targets = compare_neighbors(cube, neighbors, cubes)
     # Choose one target (smallest) to chase if any exist.
     target = single_target(targets)
 
@@ -288,7 +291,12 @@ def update_cube(cube: Cube, dt: float, cubes: list[Cube]) -> None:
     elif cube.y + cube.size >= WINDOW_HEIGHT:
         cube.y = 0+cube.size
 
-
+def kill(to_kill: Cube, cubes: list[Cube])-> Cube:
+    # Replace cube, with the same size
+    for i in range(len(cubes)):
+        if cubes[i] is to_kill:
+            cubes[i] = create_cube(to_kill.size)
+    
 def check_kill(to_kill: Cube)-> Cube:
     # Replace cube when its lifespan has elapsed by generating a new cube.
     ct = time.time()
@@ -333,15 +341,13 @@ def load_music(filename:str)->None:
 def check_collision(cube: Cube, neighbor: Cube)-> bool:
     cx = int(cube.x + cube.size / 2)
     cy = int(cube.y + cube.size / 2)
-    radius = int(cube.size / 2)
-    if neighbor is Cube:
-        nx, ny = neighbor.x + neighbor.size / 2, neighbor.y + neighbor.size / 2
-        dx = cx - nx
-        dy = cy - ny
-        # Compare squared distance to avoid computing square roots.
-        if dx * dx + dy * dy <= radius**2:
-            return True
-        return False
+    radius = int(neighbor.size / 2) + int(cube.size/2)
+    nx, ny = neighbor.x + neighbor.size / 2, neighbor.y + neighbor.size / 2
+    dx = cx - nx
+    dy = cy - ny
+    # Compare squared distance to avoid computing square roots.
+    if dx * dx + dy * dy <= radius**2:
+        return True
     return False
 
 
@@ -355,7 +361,7 @@ def main() -> None:
     load_music("overworld_day.mp3")
 
     # Create initial cube population
-    cubes = [create_cube(size)  for number, size in CUBE_SIZE_COUNT
+    CUBES = [create_cube(size)  for number, size in CUBE_SIZE_COUNT
              for _ in range(number)]
 
     running = True
@@ -377,19 +383,19 @@ def main() -> None:
                     running = False
                 elif event.key == pygame.K_r:
                     # Respawn a fresh set of cubes with new random properties
-                    cubes = [create_cube(size)  for number, size in CUBE_SIZE_COUNT
+                    CUBES = [create_cube(size)  for number, size in CUBE_SIZE_COUNT
                             for _ in range(number)]
         # Update each cube and replace it if its lifespan expired
-        for i in range(len(cubes)):
-            update_cube(cubes[i], dt, cubes)
-            cubes[i]=check_kill(cubes[i])
+        for i in range(len(CUBES)):
+            update_cube(CUBES[i], dt, CUBES)
+            CUBES[i]=check_kill(CUBES[i])
 
         # Render pass: background, all cubes, HUD, then flip display
         screen.fill(BACKGROUND_COLOR)
-        for i in range(len(cubes)):
-            draw_cube(screen, cubes[i])
+        for i in range(len(CUBES)):
+            draw_cube(screen, CUBES[i])
 
-        draw_hud(screen, font, len(cubes), displayed_fps)
+        draw_hud(screen, font, len(CUBES), displayed_fps)
         pygame.display.flip()
 
     pygame.quit()

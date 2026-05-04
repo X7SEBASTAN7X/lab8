@@ -34,3 +34,15 @@ This implementation deprecates the following functions:
 ## EXERCISE 4 - Collission detection
 - Decision: Copied the neighbor search and adjusted to what i think is correct
 line:333
+Had to redesign, might be wrong
+checking dx * dx + dy * dy <= radius**2
+with radius = int(neighbor.size / 2) + int(cube.size/2)
+probably wrong but works
+
+## EXERCISE 5 - Eating
+- Will try to implement this inside the neighbors function
+Flow:
+Is neighbor -> is target -> is colliding -> if true: Recreate
+
+- Completed, but had to modify functions to additionally pass the cubes list as a total to know which cube needs to be replaced and being able to do it
+
