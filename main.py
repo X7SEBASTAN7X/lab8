@@ -11,7 +11,7 @@ WINDOW_HEIGHT = 720
 BACKGROUND_COLOR = (20, 24, 30)
 FPS = 60
 
-CUBE_COUNT = 20
+# CUBE_COUNT = 20
 
 CUBE_SIZE_COUNT: list[tuple] = [(5,25),(10,10),(30,4)]
 
@@ -346,8 +346,8 @@ def main() -> None:
                     running = False
                 elif event.key == pygame.K_r:
                     # Respawn a fresh set of cubes with new random properties
-                    cubes = [create_cube() for _ in range(CUBE_COUNT)]
-
+                    cubes = [create_cube(size)  for size, number in CUBE_SIZE_COUNT
+                            for _ in range(number)]
         # Update each cube and replace it if its lifespan expired
         for i in range(len(cubes)):
             update_cube(cubes[i], dt, cubes)
