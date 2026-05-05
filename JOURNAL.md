@@ -416,3 +416,19 @@ Context and Reasons for Changes: User requested an efficiency-oriented plan, so 
 - **Hook Version**: 1.02
 - **Date**: 05-05-2026 15:19
 - **Prompt**: Please append a new entry to JOURNAL.md detailing that I created a porting plan for boids_exam.py in web/js-port.md. No code was changed, only the plan generated. Use the correct template.
+
+### **New Interaction**
+- **Agent Version**: 2.3
+- **Date**: 05-05-2026 12:00
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: Please append a new entry to JOURNAL.md detailing that I created a porting plan for boids_exam.py in web/js-port.md. No code was changed, only the plan generated. Use the correct template.
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: Gemini 3.1 Pro (Preview)
+- **Socratic Mode**: OFF
+- **Changes Made**: Created a porting plan for boids_exam.py in web/js-port.md. No code changes.
+- **Context and Reasons for Changes**: Documenting the creation of a porting plan for the boids application to JavaScript.
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 05-05-2026 15:21
+- **Prompt**: yes, but actually can you revert the changes in #file:js-port.md and leave the old one and make a new web2 folder to contain the boid stuff
