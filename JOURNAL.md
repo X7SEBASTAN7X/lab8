@@ -437,3 +437,19 @@ Context and Reasons for Changes: User requested an efficiency-oriented plan, so 
 - **Hook Version**: 1.02
 - **Date**: 05-05-2026 15:21
 - **Prompt**: Please append a new entry to JOURNAL.md detailing that I reverted the porting plan for boids_exam.py, moved the boids plan to web2/js-port.md, and restored the old main.py plan in web/js-port.md. No code was changed yet. Use the correct template.
+
+### **New Interaction**
+- **Agent Version**: 2.3
+- **Date**: 05-05-2026 15:21
+- **User**: sebastian.seingier@epita.fr
+- **Prompt**: Please append a new entry to JOURNAL.md detailing that I reverted the porting plan for boids_exam.py, moved the boids plan to web2/js-port.md, and restored the old main.py plan in web/js-port.md. No code was changed yet. Use the correct template.
+- **CoPilot Mode**: Agent
+- **CoPilot Model**: Gemini 3.1 Pro (Preview)
+- **Socratic Mode**: OFF
+- **Changes Made**: Reverted porting plan for boids_exam.py, moved boids plan to web2/js-port.md, and restored old main.py plan in web/js-port.md. No code changes.
+- **Context and Reasons for Changes**: The user reverted the porting plan for boids_exam.py to keep the original plan for main.py, and moved the new plan to web2.
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 05-05-2026 15:22
+- **Prompt**: yes
