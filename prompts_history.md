@@ -105,3 +105,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 04-05-2026 09:41
 - **Prompt**: add comments to explain each logic step and function. and dont change anything
 
+### 05-05-2026 13:43
+- **Prompt**: check #file:MY_EXAM.md and #file:main.py and list problems in logic that match the implementations listed in #file:MY_EXAM.md
+

@@ -353,3 +353,8 @@ Context and Reasons for Changes: User requested an efficiency-oriented plan, so 
 - **Socratic Mode**: ON
 - **Changes Made**: Added explanatory comments throughout `main.py`. No logic or behavior changes were made; comments only.
 - **Context and Reasons for Changes**: The user requested clearer inline documentation for learning and maintainability. Comments explain function responsibilities, steering logic, neighbor detection, collision handling, and rendering steps.
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 05-05-2026 13:43
+- **Prompt**: check #file:MY_EXAM.md and #file:main.py and list problems in logic that match the implementations listed in #file:MY_EXAM.md
