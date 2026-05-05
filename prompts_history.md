@@ -132,3 +132,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 05-05-2026 15:22
 - **Prompt**: yes
 
+### 05-05-2026 15:22
+- **Prompt**: Please append a new entry to JOURNAL.md detailing that I transpiled boids_exam.py into web2/index.html following the JS port plan. Use the correct template.
+

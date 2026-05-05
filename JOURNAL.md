@@ -453,3 +453,8 @@ Context and Reasons for Changes: User requested an efficiency-oriented plan, so 
 - **Hook Version**: 1.02
 - **Date**: 05-05-2026 15:22
 - **Prompt**: yes
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 05-05-2026 15:22
+- **Prompt**: Please append a new entry to JOURNAL.md detailing that I transpiled boids_exam.py into web2/index.html following the JS port plan. Use the correct template.
