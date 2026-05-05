@@ -411,3 +411,8 @@ Context and Reasons for Changes: User requested an efficiency-oriented plan, so 
 - **Hook Version**: 1.02
 - **Date**: 05-05-2026 15:18
 - **Prompt**: transpile #file:boids_exam.py and put it in the folder
+
+### **New Interaction**
+- **Hook Version**: 1.02
+- **Date**: 05-05-2026 15:19
+- **Prompt**: Please append a new entry to JOURNAL.md detailing that I created a porting plan for boids_exam.py in web/js-port.md. No code was changed, only the plan generated. Use the correct template.
