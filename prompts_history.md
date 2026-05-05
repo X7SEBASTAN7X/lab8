@@ -126,3 +126,6 @@ Automatically captured prompt log. Entries are appended in chronological order (
 ### 05-05-2026 15:21
 - **Prompt**: yes, but actually can you revert the changes in #file:js-port.md and leave the old one and make a new web2 folder to contain the boid stuff
 
+### 05-05-2026 15:21
+- **Prompt**: Please append a new entry to JOURNAL.md detailing that I reverted the porting plan for boids_exam.py, moved the boids plan to web2/js-port.md, and restored the old main.py plan in web/js-port.md. No code was changed yet. Use the correct template.
+
