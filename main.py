@@ -13,7 +13,7 @@ FPS = 60
 
 # CUBE_COUNT = 20
 
-CUBE_SIZE_COUNT: list[tuple] = [(5,25),(10,10),(30,4)]
+CUBE_SIZE_COUNT: list[tuple] = [(10,25),(20,10),(30,4)]
 
 CUBE_MIN_SIZE = 10
 CUBE_MAX_SIZE = 75
@@ -133,7 +133,7 @@ def compare_neighbors(cube: Cube, neighbors: list[Cube], cubes) -> tuple[list[Cu
                 if cube.size>=CUBE_MAX_SIZE:
                     cube.size = CUBE_MAX_SIZE
                 else:
-                    cube.size+= neighbor.size /3
+                    cube.size+= int(neighbor.size /4)
                 cube.vx *=  1/abs(cube.vx)*speed(cube.size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
                 cube.vy *=  1/abs(cube.vy)*speed(cube.size, CUBE_MIN_SPEED, CUBE_MAX_SPEED)
             else:

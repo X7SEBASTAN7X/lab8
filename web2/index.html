@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Boids Simulation</title>
+    <style>
+        body { 
+            margin: 0; 
+            background-color: #222; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            color: white; 
+            font-family: sans-serif;
+        }
+        canvas { 
+            background-color: #000; 
+            border: 1px solid #444; 
+        }
+    </style>
+</head>
+<body>
+    <canvas id="simulationCanvas" width="800" height="600"></canvas>
+    <script>
+        // Minimal Vector2 helper for translation parity with pygame.Vector2
+        class Vector2 {
+            constructor(x, y) { 
+                this.x = x; 
+                this.y = y; 
+            }
+        }
+
+        class Config {
+            static WIDTH = 800;
+            static HEIGHT = 600;
+
+            static NUM_BOIDS = 200;
+            static BOID_SIZE = 5;
+            static BOID_SPEED_MIN = 200;
+            static BOID_SPEED_MAX = 300;
+
+            static SEPARATION_ON = false;
+            static SEPARATION_DISTANCE = Config.BOID_SIZE * 15;
+            static SEPARATION_STEER_STRENGTH = 5.0;
+
+            static ALIGNMENT_ON = false;
+            static ALIGNMENT_DISTANCE = Config.BOID_SIZE * 100;
+            static ALIGNMENT_STEER_STRENGTH = 0.8;
+
+            static COHESION_ON = false;
+            static COHESION_DISTANCE = Config.BOID_SIZE * 50;
+            static COHESION_STEER_STRENGTH = 5.0;
+
+            static WALL_BEHAVIOR = "bounce"; // "wrap" or "bounce"
+        }
+
+        // Equivalent to Pygame's main Boid class
+        class Boid {
+            constructor() {
+                this.x = Math.random() * Config.WIDTH;
+                this.y = Math.random() * Config.HEIGHT;
+                this.speed = Config.BOID_SPEED_MIN + Math.random() * (Config.BOID_SPEED_MAX - Config.BOID_SPEED_MIN);
+                let angle = Math.random() * 2 * Math.PI;
+                this.vx = this.speed * Math.cos(angle);
+                this.vy = this.speed * Math.sin(angle);
+                this.angle = angle;
+            }
+
+            _clampSpeed() {
+                if (this.speed > Config.BOID_SPEED_MAX) {
+                    this.speed = Config.BOID_SPEED_MAX;
+                }
+            }
+
+            _screenWrap() {
+                if (this.x <= 0) {
+                    this.x = Config.WIDTH - Config.BOID_SIZE;
+                } else if (this.x + Config.BOID_SIZE >= Config.WIDTH) {
+                    this.x = Config.BOID_SIZE; // 0 + BOID_SIZE
+                }
+
+                if (this.y <= 0) {
+                    this.y = Config.HEIGHT - Config.BOID_SIZE;
+                } else if (this.y + Config.BOID_SIZE >= Config.HEIGHT) {
+                    this.y = Config.BOID_SIZE; // 0 + BOID_SIZE
+                }
+            }
+
+            _screenBounce() {
+                if (this.x < Config.BOID_SIZE || this.x > Config.WIDTH - Config.BOID_SIZE) {
+                    this.vx = -this.vx;
+                    this.x = Math.max(Config.BOID_SIZE, Math.min(this.x, Config.WIDTH - Config.BOID_SIZE));
+                }
+                if (this.y < Config.BOID_SIZE || this.y > Config.HEIGHT - Config.BOID_SIZE) {
+                    this.vy = -this.vy;
+                    this.y = Math.max(Config.BOID_SIZE, Math.min(this.y, Config.HEIGHT - Config.BOID_SIZE));
+                }
+            }
+
+            _randomSteer(spread = 0.2) {
+                this.angle = this.angle - spread + Math.random() * (spread * 2);
+            }
+
+            _separation(boids) {
+                let steer = new Vector2(0, 0);
+                return steer;
+            }
+
+            _alignment(boids) {
+                let steer = new Vector2(0, 0);
+                return steer;
+            }
+
+            _cohesion(boids) {
+                let steer = new Vector2(0, 0);
+                return steer;
+            }
+
+            update(boids, dt) {
+                let dtSeconds = dt / 1000.0;
+
+                this._randomSteer();
+
+                // Update the boid's position based on its velocity.
+                this.x += this.vx * dtSeconds;
+                this.y += this.vy * dtSeconds;
+
+                // Handle wall behavior (bounce or wrap)
+                if (Config.WALL_BEHAVIOR === "bounce") {
+                    this._screenBounce();
+                } else {
+                    this._screenWrap();
+                }
+            }
+
+            draw(ctx) {
+                // Equivalent to pygame.draw.polygon
+                let arrowSpreadAngle = 2.5; 
+                let currentAngle = Math.atan2(this.vy, this.vx);
+                
+                let p1 = {
+                    x: this.x + Math.cos(currentAngle) * Config.BOID_SIZE, 
+                    y: this.y + Math.sin(currentAngle) * Config.BOID_SIZE
+                };
+                let p2 = {
+                    x: this.x + Math.cos(currentAngle + arrowSpreadAngle) * Config.BOID_SIZE, 
+                    y: this.y + Math.sin(currentAngle + arrowSpreadAngle) * Config.BOID_SIZE
+                };
+                let p3 = {
+                    x: this.x + Math.cos(currentAngle - arrowSpreadAngle) * Config.BOID_SIZE, 
+                    y: this.y + Math.sin(currentAngle - arrowSpreadAngle) * Config.BOID_SIZE
+                };
+
+                ctx.fillStyle = "rgb(255, 255, 255)";
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.lineTo(p3.x, p3.y);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // Equivalent to draw_hud function
+        function drawHud(ctx, config, fps) {
+            ctx.font = "18px Arial";
+            ctx.fillStyle = "rgb(255, 255, 255)";
+            
+            ctx.fillText(`FPS: ${fps.toFixed(2)}   (Refresh page to quit/restart)`, 10, 25);
+            ctx.fillText(`Separation: ${Config.SEPARATION_ON ? 'ON' : 'OFF'} - Press 'S' to toggle`, 10, 40);
+            ctx.fillText(`Alignment: ${Config.ALIGNMENT_ON ? 'ON' : 'OFF'} - Press 'A' to toggle`, 10, 55);
+            ctx.fillText(`Cohesion: ${Config.COHESION_ON ? 'ON' : 'OFF'} - Press 'C' to toggle`, 10, 70);
+            
+            let behaviorName = Config.WALL_BEHAVIOR.charAt(0).toUpperCase() + Config.WALL_BEHAVIOR.slice(1);
+            ctx.fillText(`Wall Behavior: ${behaviorName} - Press 'W' to toggle`, 10, 85);
+        }
+
+        // Equivalent to run_simulation
+        function runSimulation() {
+            const canvas = document.getElementById("simulationCanvas");
+            const ctx = canvas.getContext("2d");
+
+            // Create boids
+            let boids = [];
+            for(let i = 0; i < Config.NUM_BOIDS; i++) {
+                boids.push(new Boid());
+            }
+
+            // Handle events
+            window.addEventListener('keydown', (event) => {
+                let key = event.key.toLowerCase();
+                if (key === 's') {
+                    Config.SEPARATION_ON = !Config.SEPARATION_ON;
+                } else if (key === 'a') {
+                    Config.ALIGNMENT_ON = !Config.ALIGNMENT_ON;
+                } else if (key === 'c') {
+                    Config.COHESION_ON = !Config.COHESION_ON;
+                } else if (key === 'w') {
+                    Config.WALL_BEHAVIOR = Config.WALL_BEHAVIOR === "wrap" ? "bounce" : "wrap";
+                }
+            });
+
+            let lastTime = performance.now();
+            let frameCount = 0;
+            let lastFpsTime = lastTime;
+            let currentFps = 0;
+
+            // Main loop
+            function gameLoop(currentTime) {
+                let dt = currentTime - lastTime;
+                lastTime = currentTime;
+
+                // FPS Calculation equivalent to clock.get_fps()
+                frameCount++;
+                if (currentTime - lastFpsTime >= 1000) {
+                    currentFps = frameCount;
+                    frameCount = 0;
+                    lastFpsTime = currentTime;
+                }
+
+                // Screen clearing
+                ctx.fillStyle = "rgb(0, 0, 0)";
+                ctx.fillRect(0, 0, Config.WIDTH, Config.HEIGHT);
+
+                // Update and draw boids
+                for (let boid of boids) {
+                    boid.update(boids, dt);
+                    boid.draw(ctx);
+                }
+
+                drawHud(ctx, Config, currentFps);
+                
+                requestAnimationFrame(gameLoop);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        runSimulation();
+    </script>
+</body>
+</html>

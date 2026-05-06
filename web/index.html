@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moving Cubes or Circles</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #14181e;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      font-family: sans-serif;
+    }
+
+    canvas {
+      display: block;
+      background: #14181e;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+    const WINDOW_WIDTH = 1280;
+    const WINDOW_HEIGHT = 720;
+    const BACKGROUND_COLOR = [20, 24, 30];
+    const FPS = 60;
+
+    const CUBE_SIZE_COUNT = [[10, 20], [20, 10], [30, 4]];
+
+    const CUBE_MIN_SIZE = 10;
+    const CUBE_MAX_SIZE = 75;
+    const CUBE_MIN_SPEED = 20;
+    const CUBE_MAX_SPEED = 200;
+
+    const ANALYSIS_RADIUS = 100;
+    const ANALYSIS_RADIUS_SQ = ANALYSIS_RADIUS * ANALYSIS_RADIUS;
+    const FLEE_STEER = 1200;
+    const CHASE_STEER = 800;
+
+    const LIFESPAN_MIN = 15;
+    const LIFESPAN_MAX = 60;
+
+    const BOUNCE_DAMPING_MIN = 95;
+    const BOUNCE_DAMPING_MAX = 105;
+
+    let RECT_CUBES = [];
+    const TRAIL_LENGTHS = 30;
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = WINDOW_WIDTH;
+    canvas.height = WINDOW_HEIGHT;
+
+    let music = null;
+
+    function randint(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function randomUniform(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function choice(values) {
+      return values[randint(0, values.length - 1)];
+    }
+
+    function rgb(color) {
+      return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+    }
+
+    /** Equivalent to the Python Cube dataclass. */
+    class Cube {
+      constructor(x, y, size, vx, vy, color, lifespan, death, line) {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.vx = vx;
+        this.vy = vy;
+        this.color = color;
+        this.lifespan = lifespan;
+        this.death = death;
+        this.line = line;
+      }
+    }
+
+    function randomColor() {
+      return [
+        randint(70, 255),
+        randint(70, 255),
+        randint(70, 255),
+      ];
+    }
+
+    function speed(size, mini, maxi) {
+      return maxi - ((size - CUBE_MIN_SIZE) / (CUBE_MAX_SIZE - CUBE_MIN_SIZE)) * (maxi - mini);
+    }
+
+    function createRandomCube(lifespan, size) {
+      const x = randomUniform(0, WINDOW_WIDTH - size);
+      const y = randomUniform(0, WINDOW_HEIGHT - size);
+      const vx = choice([-1, 1]) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED);
+      const vy = choice([-1, 1]) * speed(size, CUBE_MIN_SPEED, CUBE_MAX_SPEED);
+      const death = Date.now() / 1000 + lifespan;
+      return new Cube(x, y, size, vx, vy, randomColor(), lifespan, death, [[x, y]]);
+    }
+
+    function createCube(size = undefined) {
+      const lifespan = randint(LIFESPAN_MIN, LIFESPAN_MAX);
+      if (size === undefined) {
+        size = randint(CUBE_MIN_SIZE, CUBE_MAX_SIZE);
+      }
+      return createRandomCube(lifespan, size);
+    }
+
+    function onCubeBounce(cube, wall) {
+      void cube;
+      void wall;
+    }
+
+    function findNeighbors(cube, cubes, radiusSq) {
+      const close = [];
+      const cx = cube.x + cube.size / 2;
+      const cy = cube.y + cube.size / 2;
+
+      for (const neighbor of cubes) {
+        if (neighbor === cube) {
+          continue;
+        }
+
+        const nx = neighbor.x + neighbor.size / 2;
+        const ny = neighbor.y + neighbor.size / 2;
+        const dx = cx - nx;
+        const dy = cy - ny;
+
+        if (dx * dx + dy * dy <= radiusSq) {
+          close.push(neighbor);
+        }
+      }
+
+      return close;
+    }
+
+    function checkCollision(cube, neighbor) {
+      const cx = cube.x + cube.size / 2;
+      const cy = cube.y + cube.size / 2;
+      const radius = neighbor.size / 2 + cube.size / 2;
+      const nx = neighbor.x + neighbor.size / 2;
+      const ny = neighbor.y + neighbor.size / 2;
+      const dx = cx - nx;
+      const dy = cy - ny;
+      if (dx * dx + dy * dy <= radius ** 2) {
+        return true;
+      }
+      return false;
+    }
+
+    function kill(toKill, cubes) {
+      for (let i = 0; i < cubes.length; i += 1) {
+        if (cubes[i] === toKill) {
+          cubes[i] = createCube(toKill.size);
+        }
+      }
+    }
+
+    function compareNeighbors(cube, neighbors, cubes) {
+      const threats = [];
+      const targets = [];
+
+      for (const neighbor of neighbors) {
+        if (neighbor.size > cube.size) {
+          threats.push(neighbor);
+        } else if (neighbor.size < cube.size) {
+          if (checkCollision(cube, neighbor)) {
+            kill(neighbor, cubes);
+            if (cube.size >= CUBE_MAX_SIZE) {
+              cube.size = CUBE_MAX_SIZE;
+            } else {
+              cube.size += Math.trunc(neighbor.size / 4);
+            }
+            cube.vx *= 1 / Math.abs(cube.vx) * speed(cube.size, CUBE_MIN_SPEED, CUBE_MAX_SPEED);
+            cube.vy *= 1 / Math.abs(cube.vy) * speed(cube.size, CUBE_MIN_SPEED, CUBE_MAX_SPEED);
+          } else {
+            targets.push(neighbor);
+          }
+        }
+      }
+
+      return [threats, targets];
+    }
+
+    function singleTarget(targets) {
+      if (!targets.length) {
+        return null;
+      }
+
+      let smallest = targets[0];
+      for (const candidate of targets.slice(1)) {
+        if (candidate.size < smallest.size) {
+          smallest = candidate;
+        }
+      }
+      return smallest;
+    }
+
+    function computeChaseSteering(cube, target, steerStrength) {
+      if (!target) {
+        return [0, 0];
+      }
+
+      const cx = cube.x + cube.size / 2;
+      const cy = cube.y + cube.size / 2;
+      const tx = target.x + target.size / 2;
+      const ty = target.y + target.size / 2;
+      const dx = tx - cx;
+      const dy = ty - cy;
+      const distSq = dx * dx + dy * dy;
+
+      if (distSq > 0) {
+        const dist = Math.sqrt(distSq);
+        return [(dx / dist) * steerStrength, (dy / dist) * steerStrength];
+      }
+
+      return [0, 0];
+    }
+
+    function computeFleeSteering(cube, threats, steerStrength) {
+      void steerStrength;
+      if (!threats.length) {
+        return [0, 0];
+      }
+
+      let steerX = 0;
+      let steerY = 0;
+      const analysisRadius = ANALYSIS_RADIUS;
+      const cx = cube.x + cube.size / 2;
+      const cy = cube.y + cube.size / 2;
+
+      for (const threat of threats) {
+        const nx = threat.x + threat.size / 2;
+        const ny = threat.y + threat.size / 2;
+        const dx = cx - nx;
+        const dy = cy - ny;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq > 0) {
+          const dist = Math.sqrt(distSq);
+          const weight = (analysisRadius - dist) / analysisRadius;
+          steerX += (dx / dist) * Math.max(0, weight);
+          steerY += (dy / dist) * Math.max(0, weight);
+        }
+      }
+
+      const totalDistSq = steerX * steerX + steerY * steerY;
+      if (totalDistSq > 0) {
+        const totalDist = Math.sqrt(totalDistSq);
+        return [(steerX / totalDist) * FLEE_STEER, (steerY / totalDist) * FLEE_STEER];
+      }
+
+      return [0, 0];
+    }
+
+    function applySteering(cube, steerX, steerY, dt) {
+      void dt;
+      if (steerX === 0 && steerY === 0) {
+        return;
+      }
+
+      const origSpeed = Math.sqrt(cube.vx ** 2 + cube.vy ** 2);
+      cube.vx += steerX * dt;
+      cube.vy += steerY * dt;
+
+      const newSpeed = Math.sqrt(cube.vx ** 2 + cube.vy ** 2);
+      if (newSpeed > 0) {
+        cube.vx = cube.vx / newSpeed * origSpeed;
+        cube.vy = cube.vy / newSpeed * origSpeed;
+      }
+    }
+
+    function applyBounceDamping(velocity) {
+      const damping = randint(BOUNCE_DAMPING_MIN, BOUNCE_DAMPING_MAX) / 100;
+      return -velocity * damping;
+    }
+
+    function updateCube(cube, dt, cubes) {
+      const centerX = Math.trunc(cube.x + cube.size / 2);
+      const centerY = Math.trunc(cube.y + cube.size / 2);
+      cube.line.push([centerX, centerY]);
+      while (cube.line.length > TRAIL_LENGTHS) {
+        cube.line.shift();
+      }
+
+      const neighbors = findNeighbors(cube, cubes, ANALYSIS_RADIUS_SQ);
+      const [threats, targets] = compareNeighbors(cube, neighbors, cubes);
+      const target = singleTarget(targets);
+
+      const [fleeX, fleeY] = computeFleeSteering(cube, threats, FLEE_STEER);
+      let steerX = fleeX;
+      let steerY = fleeY;
+
+      if (target) {
+        const [chaseX, chaseY] = computeChaseSteering(cube, target, CHASE_STEER);
+        steerX += chaseX;
+        steerY += chaseY;
+      }
+
+      applySteering(cube, steerX, steerY, dt);
+
+      cube.x += cube.vx * dt;
+      cube.y += cube.vy * dt;
+
+      if (cube.x <= 0) {
+        cube.x = WINDOW_WIDTH - cube.size;
+        cube.line = [[cube.x, cube.y]];
+      } else if (cube.x + cube.size >= WINDOW_WIDTH) {
+        cube.x = 0 + cube.size;
+        cube.line = [[cube.x, cube.y]];
+      }
+
+      if (cube.y <= 0) {
+        cube.y = WINDOW_HEIGHT - cube.size;
+        cube.line = [[cube.x, cube.y]];
+      } else if (cube.y + cube.size >= WINDOW_HEIGHT) {
+        cube.y = 0 + cube.size;
+        cube.line = [[cube.x, cube.y]];
+      }
+    }
+
+    function checkKill(toKill) {
+      const currentTime = Date.now() / 1000;
+      if (toKill.lifespan > 0 && currentTime > toKill.death) {
+        toKill = createCube(toKill.size);
+      }
+      return toKill;
+    }
+
+    function addLine(cube) {
+      const color = cube.color;
+      const width = 2;
+      ctx.strokeStyle = rgb(color);
+      ctx.lineWidth = width;
+      for (let i = 1; i < cube.line.length; i += 1) {
+        const startPos = [Math.trunc(cube.line[i - 1][0]), Math.trunc(cube.line[i - 1][1])];
+        const endPos = [Math.trunc(cube.line[i][0]), Math.trunc(cube.line[i][1])];
+        ctx.beginPath();
+        ctx.moveTo(startPos[0], startPos[1]);
+        ctx.lineTo(endPos[0], endPos[1]);
+        ctx.stroke();
+      }
+    }
+
+    function drawCube(cube) {
+      const centerX = Math.trunc(cube.x + cube.size / 2);
+      const centerY = Math.trunc(cube.y + cube.size / 2);
+      const radius = Math.trunc(cube.size / 2);
+
+      ctx.fillStyle = rgb(cube.color);
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fill();
+      addLine(cube);
+    }
+
+    function drawHud(cubeCount, fpsValue) {
+      ctx.fillStyle = "rgb(235, 238, 245)";
+      ctx.font = "18px sans-serif";
+      ctx.textBaseline = "top";
+      ctx.fillText(`Cubes: ${cubeCount}   FPS: ${fpsValue.toFixed(1)}   R: respawn   ESC: quit`, 14, 12);
+    }
+
+    function loadMusic(filename) {
+      try {
+        music = new Audio(filename);
+        music.loop = true;
+        const playPromise = music.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => {});
+        }
+      } catch (error) {
+        console.log(`File not found: ${filename}`);
+      }
+    }
+
+    function createInitialCubes() {
+      return CUBE_SIZE_COUNT.flatMap(([number, size]) => {
+        const cubes = [];
+        for (let i = 0; i < number; i += 1) {
+          cubes.push(createCube(size));
+        }
+        return cubes;
+      });
+    }
+
+    /** Equivalent to the Python while-running loop and pygame.display.flip(). */
+    function main() {
+      let running = true;
+      let displayedFps = 0;
+      let lastFrameTime = performance.now();
+      let animationId = 0;
+      let CUBES = createInitialCubes();
+
+      function respawnCubes() {
+        CUBES = createInitialCubes();
+      }
+
+      function handleKeyDown(event) {
+        const key = event.key;
+        const lowerKey = key.length === 1 ? key.toLowerCase() : key;
+
+        if (lowerKey === "Escape" || lowerKey === "q") {
+          running = false;
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+          }
+          return;
+        }
+
+        if (lowerKey === "r") {
+          respawnCubes();
+        }
+
+        if (lowerKey === "s") {
+          config.SEPARATION_ON = !config.SEPARATION_ON;
+        }
+
+        if (lowerKey === "a") {
+          config.ALIGNEMENT_ON = !config.ALIGNEMENT_ON;
+        }
+
+        if (lowerKey === "c") {
+          config.COHESION_ON = !config.COHESION_ON;
+        }
+
+        if (lowerKey === "w") {
+          config.WALL_BEHAVIOR = config.WALL_BEHAVIOR === "wrap" ? "bounce" : "wrap";
+        }
+      }
+
+      const config = {
+        SEPARATION_ON: false,
+        ALIGNEMENT_ON: false,
+        COHESION_ON: false,
+        WALL_BEHAVIOR: "bounce",
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+
+      function frame(timestamp) {
+        if (!running) {
+          return;
+        }
+
+        const dt = (timestamp - lastFrameTime) / 1000;
+        lastFrameTime = timestamp;
+
+        const currentFps = dt > 0 ? 1 / dt : 0;
+        if (currentFps > 0) {
+          displayedFps = displayedFps * 0.9 + currentFps * 0.1;
+        }
+
+        ctx.fillStyle = `rgb(${BACKGROUND_COLOR[0]}, ${BACKGROUND_COLOR[1]}, ${BACKGROUND_COLOR[2]})`;
+        ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        for (let i = 0; i < CUBES.length; i += 1) {
+          updateCube(CUBES[i], dt, CUBES);
+          CUBES[i] = checkKill(CUBES[i]);
+        }
+
+        for (let i = 0; i < CUBES.length; i += 1) {
+          drawCube(CUBES[i]);
+        }
+
+        drawHud(CUBES.length, displayedFps);
+
+        animationId = requestAnimationFrame(frame);
+      }
+
+      if (music === null) {
+        loadMusic("../overworld_day.mp3");
+      }
+
+      animationId = requestAnimationFrame(frame);
+    }
+
+    main();
+  </script>
+</body>
+</html>
